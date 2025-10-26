@@ -1,0 +1,33 @@
+.searchWrap {
+  display: inline-block;
+}
+
+.input {
+  background: #9ca3af;
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 0.5rem 1.75rem;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  min-width: 220px;
+  transition: box-shadow 150ms ease, border-color 150ms ease, color 150ms ease;
+}
+
+.input-with-clear {
+  padding-right: 2.25rem; /* room for clear button */
+}
+
+.input::placeholder {
+  color: white; /* neutral placeholder */
+}
+
+.input:hover {
+  color: #12F7D6; /* user requested hover text color */
+  border-color: rgba(18, 247, 214, 0.12);
+}
+
+.input:focus {
+  outline: 2px solid rgba(18, 247, 214, 0.12);
+  box-shadow: 0 0 0 4px rgba(18, 247, 214, 0.06);
+}
+
+
