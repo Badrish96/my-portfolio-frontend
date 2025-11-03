@@ -6,9 +6,9 @@ import Image from 'next/image'
 import ThemeToggle from '../ui/ThemeToggle'
 import Search from '../ui/Search'
 const navigation = [
-  { name: 'Home', href: '#', current: true },
-  { name: 'Blog', href: '#', current: false },
-  { name: 'Projects', href: '#', current: false },
+  { name: 'Home', href: '/', current: true },
+  { name: 'Blogs', href: '/blogs', current: false },
+  { name: 'Dashboard', href: '/dashboard', current: false },
 ]
 
 function classNames(...classes) {
@@ -39,7 +39,8 @@ export default function Header() {
                 src="/images/portfolio-logo.png"
                 width={200}
                 height={200}
-                className=""
+                className="object-cover"
+                priority={true}
               />
             </div>
             <div className="hidden sm:ml-6 sm:block">
@@ -84,7 +85,7 @@ export default function Header() {
                 <Image
                   alt="profile picture"
                   src="/images/profile-picture.jpg"
-                  className="size-10 rounded-full bg-gray-800 outline -outline-offset-1 outline-white/10"
+                  className="size-10 rounded-full bg-gray-800 outline -outline-offset-1 outline-white/10 object-cover"
                   width={50}
                   height={50}
                 />
