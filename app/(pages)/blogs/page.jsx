@@ -3,16 +3,12 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import {
-  FireIcon,
-  ClockIcon,
-  RocketLaunchIcon,
-  ChartBarIcon,
-  MagnifyingGlassIcon,
   ArrowUpIcon,
   ChatBubbleLeftIcon,
   ShareIcon,
   BookmarkIcon,
   EyeIcon,
+  ClockIcon,
   FunnelIcon,
   Squares2X2Icon,
   ListBulletIcon,
@@ -22,152 +18,12 @@ import {
   BookmarkIcon as BookmarkIconSolid,
 } from "@heroicons/react/24/solid";
 import Header from "../../../components/layout/Header";
-import Search from "../../../components/ui/Search";
-
+import { filters, categories, blogs } from "../../../data/mockData";
 export default function BlogPage() {
   const [activeFilter, setActiveFilter] = useState("hot");
   const [viewMode, setViewMode] = useState("card"); // card or list
   const [searchQuery, setSearchQuery] = useState("");
-
-  const filters = [
-    { id: "hot", name: "Hot", icon: FireIcon },
-    { id: "new", name: "New", icon: ClockIcon },
-    { id: "top", name: "Top", icon: RocketLaunchIcon },
-    { id: "trending", name: "Trending", icon: ChartBarIcon },
-  ];
-
-  const categories = [
-    "All",
-    "Web Development",
-    "Mobile Development",
-    "Backend",
-    "DevOps",
-    "Career",
-    "Tutorials",
-    "News",
-  ];
-
   const [selectedCategory, setSelectedCategory] = useState("All");
-
-  const blogs = [
-    {
-      id: 1,
-      title:
-        "Building Production-Ready Microservices with Spring Boot and Kubernetes",
-      excerpt:
-        "A comprehensive guide to building, deploying, and scaling microservices architecture. Learn about service discovery, load balancing, circuit breakers, and container orchestration with real-world examples from my work at OneDAO.",
-      author: "Badrish Choubey",
-      authorRole: "Full Stack Developer",
-      avatar: "BC",
-      category: "Backend",
-      tags: ["Spring Boot", "Microservices", "Kubernetes", "Docker"],
-      timestamp: "2 hours ago",
-      readTime: "12 min read",
-      votes: 156,
-      comments: 34,
-      views: "2.3K",
-      thumbnail: null,
-      upvoted: false,
-      bookmarked: false,
-    },
-    {
-      id: 2,
-      title: "React Performance: From Good to Great",
-      excerpt:
-        "Deep dive into React performance optimization techniques. Covering lazy loading, code splitting, memoization, virtual scrolling, and advanced patterns like useCallback, useMemo, and React.memo with practical benchmarks.",
-      author: "Badrish Choubey",
-      authorRole: "Full Stack Developer",
-      avatar: "BC",
-      category: "Web Development",
-      tags: ["React.js", "Performance", "Optimization", "Best Practices"],
-      timestamp: "5 hours ago",
-      readTime: "10 min read",
-      votes: 243,
-      comments: 56,
-      views: "4.1K",
-      thumbnail: null,
-      upvoted: true,
-      bookmarked: true,
-    },
-    {
-      id: 3,
-      title:
-        "Implementing JWT Authentication with Auth0 in React and Spring Boot",
-      excerpt:
-        "Step-by-step guide to implementing secure authentication using JWT tokens and Auth0. Includes integration with Google SSO, refresh token handling, and protecting API routes in both frontend and backend.",
-      author: "Badrish Choubey",
-      authorRole: "Full Stack Developer",
-      avatar: "BC",
-      category: "Web Development",
-      tags: ["JWT", "Auth0", "Security", "Authentication"],
-      timestamp: "1 day ago",
-      readTime: "15 min read",
-      votes: 189,
-      comments: 42,
-      views: "3.2K",
-      thumbnail: null,
-      upvoted: false,
-      bookmarked: false,
-    },
-    {
-      id: 4,
-      title: "My Journey: From Program Trainer to Full Stack Developer",
-      excerpt:
-        "How I transitioned from training employees at Concentrix to becoming a full-stack developer at Accenture and OneDAO. The challenges, the learning path, resources that helped, and advice for career switchers.",
-      author: "Badrish Choubey",
-      authorRole: "Full Stack Developer",
-      avatar: "BC",
-      category: "Career",
-      tags: ["Career", "Personal Growth", "Learning", "Story"],
-      timestamp: "2 days ago",
-      readTime: "8 min read",
-      votes: 387,
-      comments: 78,
-      views: "6.8K",
-      thumbnail: null,
-      upvoted: false,
-      bookmarked: true,
-    },
-    {
-      id: 5,
-      title: "Building React Native Apps: Lessons from Production",
-      excerpt:
-        "Real-world lessons from building React Native apps at scale. Navigation patterns, state management, native module integration, debugging techniques, and deployment strategies for both iOS and Android.",
-      author: "Badrish Choubey",
-      authorRole: "Full Stack Developer",
-      avatar: "BC",
-      category: "Mobile Development",
-      tags: ["React Native", "Mobile", "iOS", "Android"],
-      timestamp: "3 days ago",
-      readTime: "11 min read",
-      votes: 134,
-      comments: 29,
-      views: "1.9K",
-      thumbnail: null,
-      upvoted: false,
-      bookmarked: false,
-    },
-    {
-      id: 6,
-      title: "PostgreSQL Performance Tuning for High-Traffic Applications",
-      excerpt:
-        "Advanced PostgreSQL optimization techniques for applications handling 10,000+ concurrent users. Covering indexing strategies, query optimization, connection pooling, and database partitioning.",
-      author: "Badrish Choubey",
-      authorRole: "Full Stack Developer",
-      avatar: "BC",
-      category: "Backend",
-      tags: ["PostgreSQL", "Database", "Performance", "SQL"],
-      timestamp: "4 days ago",
-      readTime: "14 min read",
-      votes: 201,
-      comments: 45,
-      views: "2.7K",
-      thumbnail: null,
-      upvoted: false,
-      bookmarked: false,
-    },
-  ];
-
   const [blogList, setBlogList] = useState(blogs);
 
   const handleUpvote = (id) => {
