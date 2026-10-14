@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import ThemeClientProvider from "../components/ThemeClientProvider"
+import { LoadingProvider } from "../components/ui/LoadingProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,7 +30,7 @@ export default function RootLayout({ children }) {
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} ${ibmPlexMono.variable} antialiased`}>
         <ThemeClientProvider>
-          {children}
+          <LoadingProvider>{children}</LoadingProvider>
         </ThemeClientProvider>
       </body>
     </html>

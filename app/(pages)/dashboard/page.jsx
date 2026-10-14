@@ -13,6 +13,7 @@ import {
 } from "@heroicons/react/24/outline";
 
 import Header from "../../../components/layout/Header";
+import { useLoading } from "../../../components/ui/LoadingProvider";
 
 const defaultJobs = [
   { title: "Senior Frontend Engineer", company: "TechNova", location: "Remote", match: 94, stage: "Shortlisted" },
@@ -24,6 +25,7 @@ const defaultJobs = [
 export default function DashboardPage() {
   const [jobs, setJobs] = useState(defaultJobs);
   const [loading, setLoading] = useState(false);
+  const { startLoading, stopLoading } = useLoading();
 
   useEffect(() => {
     const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
@@ -31,6 +33,7 @@ export default function DashboardPage() {
     const loadJobs = async () => {
       try {
         setLoading(true);
+        startLoading();
         const response = await fetch(`${apiBase}/api/jobs`);
         if (!response.ok) throw new Error("Fetch failed");
         const data = await response.json();
@@ -39,6 +42,7 @@ export default function DashboardPage() {
         console.log("Using demo AI job data", error);
       } finally {
         setLoading(false);
+        stopLoading();
       }
     };
 

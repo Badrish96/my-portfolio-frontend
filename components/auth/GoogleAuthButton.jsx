@@ -1,9 +1,11 @@
 "use client";
 
 import { GoogleLogin, GoogleOAuthProvider } from "@react-oauth/google";
+import { useLoading } from "../ui/LoadingProvider";
 
 export default function GoogleAuthButton({ onCredential, onError, text = "signin_with" }) {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+  const { startLoading, stopLoading } = useLoading();
 
   if (!clientId) {
     return (
@@ -15,13 +17,17 @@ export default function GoogleAuthButton({ onCredential, onError, text = "signin
 
   return (
     <GoogleOAuthProvider clientId={clientId}>
-      <div className="flex justify-center">
+      <div className="flex justify-center" onClick={startLoading}>
         <GoogleLogin
           onSuccess={(response) => {
+            stopLoading();
             if (response.credential) onCredential(response.credential);
             else onError?.("Google did not return an ID token.");
           }}
-          onError={() => onError?.("Google sign-in failed. Please try again.")}
+          onError={() => {
+            stopLoading();
+            onError?.("Google sign-in failed. Please try again.");
+          }}
           text={text}
           theme="outline"
           shape="rectangular"

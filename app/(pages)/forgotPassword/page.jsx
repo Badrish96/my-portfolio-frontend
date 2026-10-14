@@ -11,6 +11,7 @@ import {
   CheckCircleIcon,
 } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
+import { useLoading } from "../../../components/ui/LoadingProvider";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -28,6 +29,7 @@ export default function ForgotPasswordFlow() {
   const [resetToken, setResetToken] = useState("");
   const [debugOtp, setDebugOtp] = useState("");
   const router = useRouter();
+  const { startLoading, stopLoading } = useLoading();
 
   const otpRefs = useRef([]);
 
@@ -52,6 +54,7 @@ export default function ForgotPasswordFlow() {
     }
 
     setIsLoading(true);
+    startLoading();
     try {
       const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: "POST",
@@ -68,6 +71,7 @@ export default function ForgotPasswordFlow() {
       setErrors({ email: error.message || "Unable to reach the authentication server." });
     } finally {
       setIsLoading(false);
+      stopLoading();
     }
   };
 
@@ -120,6 +124,7 @@ export default function ForgotPasswordFlow() {
     }
 
     setIsLoading(true);
+    startLoading();
     try {
       const response = await fetch(`${API_BASE}/api/auth/verify-reset-otp`, {
         method: "POST",
@@ -135,6 +140,7 @@ export default function ForgotPasswordFlow() {
       setErrors({ otp: error.message || "Unable to reach the authentication server." });
     } finally {
       setIsLoading(false);
+      stopLoading();
     }
   };
 
@@ -166,6 +172,7 @@ export default function ForgotPasswordFlow() {
     }
 
     setIsLoading(true);
+    startLoading();
     try {
       const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
         method: "POST",
@@ -179,6 +186,7 @@ export default function ForgotPasswordFlow() {
       setErrors({ password: error.message || "Unable to reach the authentication server." });
     } finally {
       setIsLoading(false);
+      stopLoading();
     }
   };
 

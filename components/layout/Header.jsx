@@ -44,16 +44,15 @@ export default function Header() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const storedUser = window.localStorage.getItem("authUser") || window.sessionStorage.getItem("authUser");
-    const token = window.localStorage.getItem("authToken") || window.sessionStorage.getItem("authToken");
-
-    if (!storedUser || !token) return;
-    try {
-      setUser(JSON.parse(storedUser));
-    } catch {
-      window.localStorage.removeItem("authUser");
-      window.sessionStorage.removeItem("authUser");
-    }
+    const loadUser = () => {
+      const storedUser = window.localStorage.getItem("authUser") || window.sessionStorage.getItem("authUser");
+      const token = window.localStorage.getItem("authToken") || window.sessionStorage.getItem("authToken");
+      if (!storedUser || !token) return setUser(null);
+      try { setUser(JSON.parse(storedUser)); } catch { setUser(null); }
+    };
+    loadUser();
+    window.addEventListener("auth-user-updated", loadUser);
+    return () => window.removeEventListener("auth-user-updated", loadUser);
   }, []);
 
   const handleSignOut = () => {
@@ -87,7 +86,7 @@ export default function Header() {
                     src="/images/portfolio-logo.png"
                     width={200}
                     height={200}
-                    className="h-10 w-32 object-contain sm:w-40 xl:w-44"
+                    className="h-12 w-40 object-contain sm:h-14 sm:w-48 xl:h-16 xl:w-56"
                     priority
                   />
                 </a>
@@ -132,9 +131,6 @@ export default function Header() {
                       >
                         <MenuItem>
                           <a href="/profile" className="block px-4 py-2 text-sm text-gray-200 data-focus:bg-white/5 data-focus:text-[#12F7D6]">Your Profile</a>
-                        </MenuItem>
-                        <MenuItem>
-                          <a href="/settings" className="block px-4 py-2 text-sm text-gray-200 data-focus:bg-white/5 data-focus:text-[#12F7D6]">Settings</a>
                         </MenuItem>
                         <MenuItem>
                           <button onClick={handleSignOut} className="block w-full px-4 py-2 text-left text-sm text-gray-200 data-focus:bg-white/5 data-focus:text-[#12F7D6]">Sign Out</button>
@@ -194,7 +190,6 @@ export default function Header() {
                 <div className="space-y-1 border-t border-white/10 pt-3">
                   <p className="px-3 pb-2 text-sm text-gray-400">Signed in as {user.name || user.username || user.email}</p>
                   <DisclosureButton as="a" href="/profile" className="block rounded-md px-3 py-2 text-sm text-gray-200 hover:bg-white/5 hover:text-[#12F7D6]">Your Profile</DisclosureButton>
-                  <DisclosureButton as="a" href="/settings" className="block rounded-md px-3 py-2 text-sm text-gray-200 hover:bg-white/5 hover:text-[#12F7D6]">Settings</DisclosureButton>
                   <button onClick={handleSignOut} className="block w-full rounded-md px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/5 hover:text-[#12F7D6]">Sign Out</button>
                 </div>
               ) : (

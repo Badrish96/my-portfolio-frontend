@@ -10,6 +10,7 @@ import {
   EyeSlashIcon,
 } from "@heroicons/react/24/outline";
 import GoogleAuthButton from "../../../components/auth/GoogleAuthButton";
+import { useLoading } from "../../../components/ui/LoadingProvider";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -27,6 +28,7 @@ export default function SignUpPage() {
   const [errors, setErrors] = useState({});
   const [serverError, setServerError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { startLoading, stopLoading } = useLoading();
 
   const userTypes = [
     { value: "developer", label: "Developer" },
@@ -88,6 +90,7 @@ export default function SignUpPage() {
     if (!validateForm()) return;
     setServerError("");
     setIsLoading(true);
+    startLoading();
     try {
       const { confirmPassword, ...payload } = formData;
       const response = await fetch(`${API_BASE}/api/auth/signup`, {
@@ -102,12 +105,14 @@ export default function SignUpPage() {
       setServerError(error.message || "Unable to reach the authentication server.");
     } finally {
       setIsLoading(false);
+      stopLoading();
     }
   };
 
   const handleGoogleSignup = async (credential) => {
     setServerError("");
     setIsLoading(true);
+    startLoading();
     try {
       const response = await fetch(`${API_BASE}/api/auth/google`, {
         method: "POST",
@@ -121,6 +126,7 @@ export default function SignUpPage() {
       setServerError(error.message || "Unable to reach the authentication server.");
     } finally {
       setIsLoading(false);
+      stopLoading();
     }
   };
 
