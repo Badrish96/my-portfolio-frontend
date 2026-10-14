@@ -12,6 +12,8 @@ import {
 } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
 export default function ForgotPasswordFlow() {
   const [step, setStep] = useState("email"); // email, otp, reset, success
   const [email, setEmail] = useState("");
@@ -23,6 +25,8 @@ export default function ForgotPasswordFlow() {
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+  const [resetToken, setResetToken] = useState("");
+  const [debugOtp, setDebugOtp] = useState("");
   const router = useRouter();
 
   const otpRefs = useRef([]);
@@ -35,8 +39,7 @@ export default function ForgotPasswordFlow() {
     }
   }, [resendTimer]);
 
-  const handleEmailSubmit = (e) => {
-    e.preventDefault();
+  const requestResetCode = async () => {
     setErrors({});
 
     if (!email) {
@@ -49,13 +52,28 @@ export default function ForgotPasswordFlow() {
     }
 
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Unable to send a reset code.");
+      setDebugOtp(data.debugOtp || "");
+      if (data.debugOtp) setOtp(data.debugOtp.split(""));
       setStep("otp");
       setResendTimer(60);
-      console.log("OTP sent to:", email);
-    }, 1500);
+    } catch (error) {
+      setErrors({ email: error.message || "Unable to reach the authentication server." });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEmailSubmit = async (e) => {
+    e.preventDefault();
+    await requestResetCode();
   };
 
   const handleOtpChange = (index, value) => {
@@ -93,7 +111,7 @@ export default function ForgotPasswordFlow() {
     otpRefs.current[lastFilledIndex]?.focus();
   };
 
-  const handleOtpVerify = () => {
+  const handleOtpVerify = async () => {
     const otpValue = otp.join("");
 
     if (otpValue.length !== 6) {
@@ -102,31 +120,40 @@ export default function ForgotPasswordFlow() {
     }
 
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/verify-reset-otp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, otp: otpValue }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "The code could not be verified.");
+      setResetToken(data.resetToken);
       setStep("reset");
-      console.log("OTP verified:", otpValue);
-    }, 1500);
+      setErrors({});
+    } catch (error) {
+      setErrors({ otp: error.message || "Unable to reach the authentication server." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleResendOtp = () => {
     if (resendTimer > 0) return;
 
     setOtp(["", "", "", "", "", ""]);
-    setResendTimer(60);
-    console.log("OTP resent to:", email);
+    requestResetCode();
   };
 
-  const handlePasswordReset = () => {
+  const handlePasswordReset = async () => {
     setErrors({});
 
     if (!password) {
       setErrors({ password: "Password is required" });
       return;
     }
-    if (password.length < 8) {
-      setErrors({ password: "Password must be at least 8 characters" });
+    if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/.test(password)) {
+      setErrors({ password: "Use 8+ characters with uppercase, lowercase, a number, and a special character" });
       return;
     }
     if (!confirmPassword) {
@@ -139,12 +166,20 @@ export default function ForgotPasswordFlow() {
     }
 
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      const response = await fetch(`${API_BASE}/api/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resetToken, password }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "Unable to reset password.");
       setStep("success");
-      console.log("Password reset successfully");
-    }, 1500);
+    } catch (error) {
+      setErrors({ password: error.message || "Unable to reach the authentication server." });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleBackToSignIn = () => {
@@ -154,6 +189,8 @@ export default function ForgotPasswordFlow() {
   const handleBackToEmail = () => {
     setStep("email");
     setOtp(["", "", "", "", "", ""]);
+    setResetToken("");
+    setDebugOtp("");
     setErrors({});
   };
 
@@ -259,6 +296,11 @@ export default function ForgotPasswordFlow() {
               <p className="text-[var(--primary)] font-semibold mt-1">
                 {email}
               </p>
+              {debugOtp && (
+                <p className="mt-3 text-sm text-amber-700 dark:text-amber-300">
+                  Local development code: <strong>{debugOtp}</strong>
+                </p>
+              )}
             </div>
 
             {/* OTP Verification */}
@@ -425,7 +467,7 @@ export default function ForgotPasswordFlow() {
 
                 <div className="bg-[var(--bg)]/30 border border-[var(--primary)]/20 rounded-xl p-4">
                   <p className="text-xs text-[var(--fg)] opacity-70">
-                    Password must be at least 8 characters long
+                    Use 8+ characters with uppercase, lowercase, a number, and a special character
                   </p>
                 </div>
 
