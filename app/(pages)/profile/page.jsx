@@ -2,15 +2,18 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
 import { CameraIcon, MapPinIcon, LinkIcon, UserCircleIcon } from "@heroicons/react/24/outline";
 import Header from "../../../components/layout/Header";
 import { useLoading } from "../../../components/ui/LoadingProvider";
+import { updateUser } from "../../../lib/store/authSlice";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 const emptyProfile = { name: "", username: "", email: "", userType: "developer", bio: "", location: "", website: "", avatar: "" };
 
 export default function ProfilePage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const fileInput = useRef(null);
   const { startLoading, stopLoading } = useLoading();
   const [profile, setProfile] = useState(emptyProfile);
@@ -21,6 +24,7 @@ export default function ProfilePage() {
   const saveUser = (user) => {
     const storage = window.localStorage.getItem("authToken") ? window.localStorage : window.sessionStorage;
     storage.setItem("authUser", JSON.stringify(user));
+    dispatch(updateUser(user));
     window.dispatchEvent(new Event("auth-user-updated"));
     setProfile((current) => ({ ...current, ...user }));
   };

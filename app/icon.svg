@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title">
+  <title>Badrish Choubey</title>
+  <rect width="64" height="64" rx="16" fill="#063936"/>
+  <path d="M16 18h32v21H16z" fill="none" stroke="#12F7D6" stroke-width="4" stroke-linejoin="round"/>
+  <path d="m25 25-6 5 6 5m14-10 6 5-6 5M34 23l-4 14" fill="none" stroke="#12F7D6" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12 46h40" stroke="#12F7D6" stroke-width="4" stroke-linecap="round"/>
+</svg>

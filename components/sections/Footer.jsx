@@ -77,7 +77,7 @@ export default function Footer() {
               Badrish <span className="text-[#0ea5a1]">Choubey</span>
             </h3>
             <p className="text-gray-300 mb-6 text-sm leading-relaxed">
-              Full Stack Developer with 4+ years of experience building scalable
+              Senior Software Developer with 5+ years of experience building scalable
               web and mobile applications. Passionate about creating innovative
               solutions that make a difference.
             </p>

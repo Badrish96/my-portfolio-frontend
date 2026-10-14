@@ -1,7 +1,12 @@
 "use client";
 
 import React from 'react';
-import HeroScene from '../three/HeroScene';
+import dynamic from 'next/dynamic';
+
+const HeroScene = dynamic(() => import('../three/HeroScene'), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse bg-[var(--primary)]/5" />,
+});
 
 export default function BannerSection() {
   return (
@@ -39,7 +44,7 @@ export default function BannerSection() {
               </div>
               <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--primary)]/10 transition-colors">
                 <span className="text-xl">💼</span>
-                <span className="text-sm">Technical Lead @ OneDAO</span>
+                <span className="text-sm">Senior Software Developer @ Programming.com</span>
               </div>
               <div className="flex items-center gap-3 p-2 rounded-lg hover:bg-[var(--primary)]/10 transition-colors">
                 <span className="text-xl">📱</span>
@@ -72,14 +77,14 @@ export default function BannerSection() {
               <p className="text-sm mb-6 font-mono text-[var(--fg)] opacity-50">&lt;/h1&gt;</p>
               
               <p className="mb-6 text-lg leading-relaxed text-[var(--fg)]">
-                4+ years of experience building scalable web and mobile applications. Specialized in React.js, React Native, Spring Boot microservices, and cloud deployment.
+                5+ years of experience building scalable enterprise web and mobile applications. Specialized in React.js, Next.js, TypeScript, Node.js, React Native, and cloud delivery, with AI assisted development using Cursor, Claude, and GitHub Copilot.
               </p>
 
               <div className="flex flex-wrap gap-2 mb-8">
                 <span className="px-4 py-2 border rounded-full text-sm font-medium bg-[var(--primary)]/10 border-[var(--primary)]/40 text-[var(--primary)]">React.js</span>
                 <span className="px-4 py-2 border rounded-full text-sm font-medium bg-[var(--primary)]/10 border-[var(--primary)]/40 text-[var(--primary)]">React Native</span>
-                <span className="px-4 py-2 border rounded-full text-sm font-medium bg-[var(--primary)]/10 border-[var(--primary)]/40 text-[var(--primary)]">Spring Boot</span>
-                <span className="px-4 py-2 border rounded-full text-sm font-medium bg-[var(--primary)]/10 border-[var(--primary)]/40 text-[var(--primary)]">Microservices</span>
+                <span className="px-4 py-2 border rounded-full text-sm font-medium bg-[var(--primary)]/10 border-[var(--primary)]/40 text-[var(--primary)]">TypeScript</span>
+                <span className="px-4 py-2 border rounded-full text-sm font-medium bg-[var(--primary)]/10 border-[var(--primary)]/40 text-[var(--primary)]">Node.js</span>
                 <span className="px-4 py-2 border rounded-full text-sm font-medium bg-[var(--primary)]/10 border-[var(--primary)]/40 text-[var(--primary)]">Angular</span>
                 <span className="px-4 py-2 border rounded-full text-sm font-medium bg-[var(--primary)]/10 border-[var(--primary)]/40 text-[var(--primary)]">PostgreSQL</span>
               </div>
@@ -94,7 +99,7 @@ export default function BannerSection() {
           <div className="lg:col-span-3 space-y-4">
             <div className="backdrop-blur-xl bg-white/80 dark:bg-white/5 rounded-3xl p-8 border border-[var(--primary)]/30 shadow-2xl hover:border-[var(--primary)]/60 transition-all duration-500 hover:scale-[1.02] group">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-6xl font-black group-hover:scale-110 transition-transform text-[var(--primary)]">4+</h3>
+                <h3 className="text-6xl font-black group-hover:scale-110 transition-transform text-[var(--primary)]">5+</h3>
                 <span className="text-3xl">⚡</span>
               </div>
               <p className="font-medium text-lg text-[var(--fg)]">Years of Experience</p>
@@ -126,8 +131,8 @@ export default function BannerSection() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
             <div className="p-6 rounded-2xl bg-white/60 dark:bg-white/5 border border-[var(--primary)]/20 hover:border-[var(--primary)]/50 transition-all hover:shadow-lg">
               <div className="text-3xl mb-3">🏢</div>
-              <h4 className="font-bold mb-2 text-[var(--fg)]">Technical Lead @ OneDAO</h4>
-              <p className="text-sm text-[var(--fg)] opacity-70">Leading fintech platform development with React, Spring Boot & Web3 integration</p>
+              <h4 className="font-bold mb-2 text-[var(--fg)]">Senior Software Developer</h4>
+              <p className="text-sm text-[var(--fg)] opacity-70">Building fintech and healthcare platforms with React, Next.js, TypeScript, Node.js, and AI assisted workflows</p>
             </div>
             <div className="p-6 rounded-2xl bg-white/60 dark:bg-white/5 border border-[var(--primary)]/20 hover:border-[var(--primary)]/50 transition-all hover:shadow-lg">
               <div className="text-3xl mb-3">🎓</div>

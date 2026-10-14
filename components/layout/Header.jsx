@@ -4,9 +4,12 @@ import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuIt
 import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import Search from "../ui/Search";
 import ThemeToggle from "../ui/ThemeToggle";
+import { hydrateAuth, clearSession, selectAuth } from "../../lib/store/authSlice";
+import { clearStoredAuth, readStoredAuth } from "../../lib/store/authStorage";
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -41,26 +44,22 @@ function UserAvatar({ user }) {
 
 export default function Header() {
   const pathname = usePathname();
-  const [user, setUser] = useState(null);
+  const dispatch = useDispatch();
+  const { user, hydrated } = useSelector(selectAuth);
 
   useEffect(() => {
-    const loadUser = () => {
-      const storedUser = window.localStorage.getItem("authUser") || window.sessionStorage.getItem("authUser");
-      const token = window.localStorage.getItem("authToken") || window.sessionStorage.getItem("authToken");
-      if (!storedUser || !token) return setUser(null);
-      try { setUser(JSON.parse(storedUser)); } catch { setUser(null); }
+    const syncAuth = () => dispatch(hydrateAuth(readStoredAuth()));
+    window.addEventListener("storage", syncAuth);
+    window.addEventListener("auth-user-updated", syncAuth);
+    return () => {
+      window.removeEventListener("storage", syncAuth);
+      window.removeEventListener("auth-user-updated", syncAuth);
     };
-    loadUser();
-    window.addEventListener("auth-user-updated", loadUser);
-    return () => window.removeEventListener("auth-user-updated", loadUser);
-  }, []);
+  }, [dispatch]);
 
   const handleSignOut = () => {
-    window.localStorage.removeItem("authToken");
-    window.localStorage.removeItem("authUser");
-    window.sessionStorage.removeItem("authToken");
-    window.sessionStorage.removeItem("authUser");
-    setUser(null);
+    clearStoredAuth();
+    dispatch(clearSession());
   };
 
   const isCurrent = (item) => item.href === pathname;
@@ -86,7 +85,7 @@ export default function Header() {
                     src="/images/portfolio-logo.png"
                     width={200}
                     height={200}
-                    className="h-12 w-40 object-contain sm:h-14 sm:w-48 xl:h-16 xl:w-56"
+                    className="h-16 w-48 object-cover sm:h-20 sm:w-64 xl:h-20 xl:w-72"
                     priority
                   />
                 </a>
@@ -116,7 +115,7 @@ export default function Header() {
                   <ThemeToggle />
                 </div>
 
-                {user ? (
+                {hydrated && user ? (
                   <>
                     <span className="xl:hidden" title={user.name || user.username || user.email}>
                       <UserAvatar user={user} />
@@ -138,17 +137,17 @@ export default function Header() {
                       </MenuItems>
                     </Menu>
                   </>
-                ) : (
+                ) : hydrated ? (
                   <a
                     href="/login"
                     className="rounded-md px-3 py-2 text-sm font-semibold text-[#12F7D6] transition-colors hover:bg-white/5"
                   >
                     Sign In
                   </a>
-                )}
+                ) : <div className="h-10 w-20 animate-pulse rounded-md bg-white/10" />}
 
                 <div className="hidden items-center gap-2 xl:flex">
-                  {!user && (
+                  {hydrated && !user && (
                     <a href="/signup" className="rounded-md bg-gradient-to-r from-[#0ea5a1] to-[#12F7D6] px-4 py-2 text-sm font-medium text-white transition hover:shadow-lg">
                       Sign Up
                     </a>
@@ -186,18 +185,18 @@ export default function Header() {
                 <ThemeToggle />
               </div>
 
-              {user ? (
+              {hydrated && user ? (
                 <div className="space-y-1 border-t border-white/10 pt-3">
                   <p className="px-3 pb-2 text-sm text-gray-400">Signed in as {user.name || user.username || user.email}</p>
                   <DisclosureButton as="a" href="/profile" className="block rounded-md px-3 py-2 text-sm text-gray-200 hover:bg-white/5 hover:text-[#12F7D6]">Your Profile</DisclosureButton>
                   <button onClick={handleSignOut} className="block w-full rounded-md px-3 py-2 text-left text-sm text-gray-200 hover:bg-white/5 hover:text-[#12F7D6]">Sign Out</button>
                 </div>
-              ) : (
+              ) : hydrated ? (
                 <div className="grid grid-cols-2 gap-3 border-t border-white/10 pt-4">
                   <DisclosureButton as="a" href="/login" className="rounded-md border border-white/15 px-3 py-2 text-center text-sm font-semibold text-gray-100 hover:border-[#12F7D6] hover:text-[#12F7D6]">Sign In</DisclosureButton>
                   <DisclosureButton as="a" href="/signup" className="rounded-md bg-gradient-to-r from-[#0ea5a1] to-[#12F7D6] px-3 py-2 text-center text-sm font-semibold text-white">Sign Up</DisclosureButton>
                 </div>
-              )}
+              ) : <div className="h-20 animate-pulse rounded-md bg-white/5" />}
             </div>
           </DisclosurePanel>
         </>

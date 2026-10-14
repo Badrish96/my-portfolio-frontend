@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useDispatch } from "react-redux";
 import { motion } from "framer-motion";
 import {
   EnvelopeIcon,
@@ -11,10 +12,13 @@ import {
 } from "@heroicons/react/24/outline";
 import GoogleAuthButton from "../../../components/auth/GoogleAuthButton";
 import { useLoading } from "../../../components/ui/LoadingProvider";
+import { setSession } from "../../../lib/store/authSlice";
+import { saveStoredAuth } from "../../../lib/store/authStorage";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function SignUpPage() {
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     name: "",
     username: "",
@@ -80,8 +84,9 @@ export default function SignUpPage() {
   };
 
   const finishSignup = (data) => {
-    window.localStorage.setItem("authToken", data.token);
-    window.localStorage.setItem("authUser", JSON.stringify(data.user));
+    saveStoredAuth(data, true);
+    dispatch(setSession({ user: data.user, token: data.token }));
+    window.dispatchEvent(new Event("auth-user-updated"));
     window.location.href = "/dashboard";
   };
 

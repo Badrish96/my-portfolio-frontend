@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
@@ -8,7 +8,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/24/outline";
 export default function SkillsSection() {
   const scrollRef = useRef(null);
 
-  const scroll = (direction) => {
+  const scroll = useCallback((direction) => {
     if (scrollRef.current) {
       const scrollAmount = scrollRef.current.offsetWidth * 0.8;
       scrollRef.current.scrollBy({
@@ -16,9 +16,12 @@ export default function SkillsSection() {
         behavior: "smooth",
       });
     }
-  };
+  }, []);
 
   const skills = [
+    { name: "GitHub Copilot", level: 92, icon: "AI" },
+    { name: "Cursor IDE", level: 92, icon: "AI" },
+    { name: "Claude AI", level: 88, icon: "AI" },
     { name: "React.js", level: 95, icon: "⚛️" },
     { name: "Next.js", level: 90, icon: "▲" },
     { name: "React Native", level: 88, icon: "📱" },
@@ -160,6 +163,11 @@ export default function SkillsSection() {
               "Web3",
               "Blockchain",
               "Kubernetes",
+              "GitHub Copilot",
+              "Claude AI",
+              "Cursor IDE",
+              "Cursor Rules",
+              "Context Engineering",
             ].map((tech, i) => (
               <motion.span
                 key={i}

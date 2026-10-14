@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useRef, useState, useEffect } from "react";
+import React, { memo, useCallback, useRef, useState, useEffect } from "react";
 import { createPortal } from 'react-dom'
 import styles from "./Search.module.css";
 import { MagnifyingGlassIcon, XMarkIcon } from "@heroicons/react/24/outline";
@@ -20,28 +20,31 @@ function Search() {
       return;
     }
 
+    const controller = new AbortController();
     const fetchData = async () => {
       try {
         setIsSearching(true);
         const res = await fetch(
-          `https://dummyjson.com/products/search?q=${debouncedValue}`
+          `https://dummyjson.com/products/search?q=${encodeURIComponent(debouncedValue)}`,
+          { signal: controller.signal },
         );
         const data = await res.json();
         setResults(data.products || []);
       } catch (err) {
-        console.error("Error fetching:", err);
+        if (err.name !== "AbortError") console.error("Error fetching:", err);
       } finally {
         setIsSearching(false);
       }
     };
 
     fetchData();
+    return () => controller.abort();
   }, [debouncedValue]);
 
-  function clear() {
+  const clear = useCallback(() => {
     setValue("");
     inputRef.current?.focus();
-  }
+  }, []);
 
   const inputClass = `${styles.input} ${
     value ? styles["input-with-clear"] : ""
@@ -127,4 +130,4 @@ function Search() {
   );
 }
 
-export default Search;
+export default memo(Search);

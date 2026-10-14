@@ -9,13 +9,17 @@ import {
   EyeSlashIcon,
 } from "@heroicons/react/24/outline";
 import { useRouter } from "next/navigation";
+import { useDispatch } from "react-redux";
 import GoogleAuthButton from "../../../components/auth/GoogleAuthButton";
 import { useLoading } from "../../../components/ui/LoadingProvider";
+import { setSession } from "../../../lib/store/authSlice";
+import { saveStoredAuth } from "../../../lib/store/authStorage";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export default function SignInPage() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -53,9 +57,9 @@ export default function SignInPage() {
   };
 
   const saveSession = (data, persistent = rememberMe) => {
-    const storage = persistent ? window.localStorage : window.sessionStorage;
-    storage.setItem("authToken", data.token);
-    storage.setItem("authUser", JSON.stringify(data.user));
+    saveStoredAuth(data, persistent);
+    dispatch(setSession({ user: data.user, token: data.token }));
+    window.dispatchEvent(new Event("auth-user-updated"));
   };
 
   const handleSubmit = async (e) => {
