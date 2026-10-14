@@ -63,6 +63,7 @@ export default function Header() {
   };
 
   const isCurrent = (item) => item.href === pathname;
+  const visibleNavigation = navigation.filter((item) => item.name !== "Dashboard" || (hydrated && user));
 
   return (
     <Disclosure as="nav" className="relative border-b border-white/10 py-2">
@@ -93,7 +94,7 @@ export default function Header() {
 
               <div className="hidden flex-1 items-center justify-center gap-5 xl:flex">
                 <div className="flex items-center gap-1">
-                  {navigation.map((item) => (
+                  {visibleNavigation.map((item) => (
                     <a
                       key={item.name}
                       href={item.href}
@@ -164,7 +165,7 @@ export default function Header() {
               </div>
 
               <nav aria-label="Main navigation" className="space-y-1">
-                {navigation.map((item) => (
+                {visibleNavigation.map((item) => (
                   <DisclosureButton
                     key={item.name}
                     as="a"
