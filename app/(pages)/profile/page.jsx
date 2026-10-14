@@ -9,7 +9,7 @@ import { useLoading } from "../../../components/ui/LoadingProvider";
 import { updateUser } from "../../../lib/store/authSlice";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-const emptyProfile = { name: "", username: "", email: "", userType: "developer", bio: "", location: "", website: "", avatar: "" };
+const emptyProfile = { name: "", username: "", email: "", userType: "developer", bio: "", location: "", website: "", avatar: "", skills: [], preferredRoles: [], preferredLocations: [], experienceYears: "", expectedCompensation: "" };
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -61,7 +61,7 @@ export default function ProfilePage() {
       const response = await fetch(`${API_BASE}/api/auth/profile`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({ name: profile.name, username: profile.username, userType: profile.userType, bio: profile.bio, location: profile.location, website: profile.website }),
+        body: JSON.stringify({ name: profile.name, username: profile.username, userType: profile.userType, bio: profile.bio, location: profile.location, website: profile.website, skills: toList(profile.skills), preferredRoles: toList(profile.preferredRoles), preferredLocations: toList(profile.preferredLocations), experienceYears: profile.experienceYears === "" ? undefined : Number(profile.experienceYears), expectedCompensation: profile.expectedCompensation === "" ? undefined : Number(profile.expectedCompensation) }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Unable to update profile.");
@@ -122,7 +122,7 @@ export default function ProfilePage() {
             <h2 className="mt-5 text-center text-xl font-semibold text-[var(--fg)]">{profile.name || "Your name"}</h2>
             <p className="mt-1 text-center text-sm text-[var(--fg)]/60">@{profile.username || "username"}</p>
             <div className="mt-6 grid grid-cols-3 gap-2 text-center text-xs text-[var(--fg)]/70">
-              <div><strong className="block text-lg text-[var(--fg)]">{profile.stats?.postsCount || 0}</strong>Posts</div>
+              <div><strong className="block text-lg text-[var(--fg)]">5+</strong>Years</div>
               <div><strong className="block text-lg text-[var(--fg)]">{profile.stats?.followersCount || 0}</strong>Followers</div>
               <div><strong className="block text-lg text-[var(--fg)]">{profile.stats?.followingCount || 0}</strong>Following</div>
             </div>
@@ -137,6 +137,11 @@ export default function ProfilePage() {
               <label className="block text-sm font-medium text-[var(--fg)]">Account type<select name="userType" value={profile.userType} onChange={handleChange} disabled={!isEditing} className="mt-2 w-full rounded-xl border border-[var(--primary)]/25 bg-[var(--bg)] px-4 py-3 text-[var(--fg)] disabled:opacity-60"><option value="developer">Developer</option><option value="recruiter">Recruiter</option><option value="student">Student</option></select></label>
               <Field label="Location" name="location" value={profile.location} onChange={handleChange} disabled={!isEditing} icon={<MapPinIcon className="h-4 w-4" />} />
               <Field label="Website" name="website" value={profile.website} onChange={handleChange} disabled={!isEditing} icon={<LinkIcon className="h-4 w-4" />} />
+              <Field label="Skills (comma separated)" name="skills" value={toText(profile.skills)} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Preferred roles (comma separated)" name="preferredRoles" value={toText(profile.preferredRoles)} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Preferred locations (comma separated)" name="preferredLocations" value={toText(profile.preferredLocations)} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Years of experience" name="experienceYears" type="number" min="0" max="80" value={profile.experienceYears ?? ""} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Expected compensation" name="expectedCompensation" type="number" min="0" value={profile.expectedCompensation ?? ""} onChange={handleChange} disabled={!isEditing} />
             </div>
             <label className="mt-5 block text-sm font-medium text-[var(--fg)]">Bio<textarea name="bio" value={profile.bio} onChange={handleChange} disabled={!isEditing} maxLength={1000} rows={5} className="mt-2 w-full resize-y rounded-xl border border-[var(--primary)]/25 bg-[var(--bg)] px-4 py-3 text-[var(--fg)] disabled:opacity-60" placeholder="Tell people a little about yourself" /></label>
             {isEditing && <button type="submit" className="mt-6 w-full rounded-xl bg-gradient-to-r from-[var(--primary)] to-blue-500 px-4 py-3 font-semibold text-white shadow-lg">Save changes</button>}
@@ -145,6 +150,14 @@ export default function ProfilePage() {
       </main>
     </div>
   );
+}
+
+function toList(value) {
+  return Array.isArray(value) ? value : String(value || "").split(",").map((item) => item.trim()).filter(Boolean);
+}
+
+function toText(value) {
+  return Array.isArray(value) ? value.join(", ") : value || "";
 }
 
 function Field({ label, icon, ...props }) {
