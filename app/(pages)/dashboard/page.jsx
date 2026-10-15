@@ -21,7 +21,7 @@ const navigationItems = [
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { token, hydrated } = useSelector(selectAuth);
+  const { token, hydrated, user } = useSelector(selectAuth);
   const { startLoading, stopLoading } = useLoading();
   const [jobs, setJobs] = useState([]);
   const [applications, setApplications] = useState([]);
@@ -68,8 +68,9 @@ export default function DashboardPage() {
           .filter((application) => application.status === "submitted" && application.job)
           .map((application) => `${normalizeJobText(application.job.company)}::${normalizeJobText(application.job.title)}`),
       );
-      const allowedSuggestions = suggestions.filter((job) => isAllowedJobLocation(job.location) && isDisplayableJob(job));
-      const allowedDiscoveredJobs = discoveredJobs.filter((job) => isAllowedJobLocation(job.location) && isDisplayableJob(job));
+      const preferredLocations = Array.isArray(user?.preferredLocations) ? user.preferredLocations : [];
+      const allowedSuggestions = suggestions.filter((job) => isAllowedJobLocation(job.location, preferredLocations) && isDisplayableJob(job));
+      const allowedDiscoveredJobs = discoveredJobs.filter((job) => isAllowedJobLocation(job.location, preferredLocations) && isDisplayableJob(job));
       // Keep every allowed job returned by the jobs endpoint, then overlay any
       // AI match data returned by suggestions. Previously, the presence of one
       // old suggestion hid newly imported jobs from the dashboard entirely.
@@ -82,7 +83,7 @@ export default function DashboardPage() {
     } catch (requestError) {
       setError(requestError.message); setJobs([]); setApplications([]); setSummary(EMPTY_SUMMARY);
     } finally { setLoading(false); stopLoading(); }
-  }, [request, startLoading, stopLoading, token]);
+  }, [request, startLoading, stopLoading, token, user?.preferredLocations]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -192,12 +193,18 @@ function AnalyticsPanel({ summary, applications }) {
   return <section className="rounded-3xl border border-[var(--primary)]/30 bg-white/80 p-5 shadow-xl backdrop-blur-xl dark:bg-[#1f252c]"><h2 className="text-xl font-semibold text-[var(--fg)]">Application analytics</h2><div className="mt-5 grid gap-4 sm:grid-cols-2"><StatCard label="Open jobs" value={summary.jobsDiscovered} /><StatCard label="Applications" value={summary.applications} /><StatCard label="Interviews" value={summary.interviews} /><StatCard label="Ready for review" value={summary.readyForReview} /></div><div className="mt-6 rounded-2xl border border-[var(--primary)]/20 bg-[var(--bg)] p-4"><p className="text-sm text-[var(--fg)]/70">Current pipeline</p><p className="mt-2 text-2xl font-bold text-[var(--fg)]">{applications.filter((application) => ["interview", "approved"].includes(application.status)).length}</p><p className="text-sm text-[var(--fg)]/70">advanced applications</p></div></section>;
 }
 
-function isAllowedJobLocation(location) {
+function isAllowedJobLocation(location, preferredLocations = []) {
   const normalized = String(location || "").toLowerCase();
-  return /\b(gurugram|gurgaon)\b/.test(normalized)
-    || /\b(bangalore|bengaluru)\b/.test(normalized)
-    || /\b(?:greater\s+)?noida\b/.test(normalized)
-    || /\b(?:new\s+)?delhi(?:\s+ncr)?\b/.test(normalized);
+  const locations = preferredLocations.length ? preferredLocations : ["Gurugram", "Bangalore", "Noida", "Delhi NCR"];
+  return locations.some((locationName) => {
+    const value = String(locationName || "").toLowerCase().trim();
+    const aliases = value === "gurugram" ? ["gurugram", "gurgaon"]
+      : value === "bangalore" ? ["bangalore", "bengaluru", "banglore"]
+        : value === "noida" ? ["noida", "greater noida"]
+          : value === "delhi ncr" ? ["delhi", "new delhi", "delhi ncr", "ncr"]
+            : [value];
+    return aliases.some((alias) => normalized.includes(alias));
+  });
 }
 
 function deduplicateJobs(jobList) {
