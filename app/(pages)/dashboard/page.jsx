@@ -62,8 +62,8 @@ export default function DashboardPage() {
           .map((application) => application.job?.id)
           .filter(Boolean),
       );
-      const allowedSuggestions = suggestions.filter((job) => isAllowedJobLocation(job.location));
-      const allowedDiscoveredJobs = discoveredJobs.filter((job) => isAllowedJobLocation(job.location));
+      const allowedSuggestions = suggestions.filter((job) => isAllowedJobLocation(job.location) && isDisplayableJob(job));
+      const allowedDiscoveredJobs = discoveredJobs.filter((job) => isAllowedJobLocation(job.location) && isDisplayableJob(job));
       // Keep every allowed job returned by the jobs endpoint, then overlay any
       // AI match data returned by suggestions. Previously, the presence of one
       // old suggestion hid newly imported jobs from the dashboard entirely.
@@ -186,7 +186,8 @@ function isAllowedJobLocation(location) {
 function deduplicateJobs(jobList) {
   const jobsByRoleAndCompany = new Map();
   for (const job of jobList) {
-    const key = `${normalizeJobText(job.company)}::${normalizeJobText(job.title)}`;
+    const role = normalizeJobText(job.title).replace(/\b(senior|sr|junior|jr|lead|principal|staff|associate|intern|trainee|i|ii|iii|iv|1|2|3|4)\b/g, " ").replace(/\s+/g, " ").trim();
+    const key = `${normalizeJobText(job.company).replace(/\s+/g, "")}::${role}`;
     if (!jobsByRoleAndCompany.has(key)) jobsByRoleAndCompany.set(key, job);
   }
   return [...jobsByRoleAndCompany.values()];
@@ -198,4 +199,17 @@ function normalizeJobText(value) {
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .replace(/\s+/g, " ");
+}
+
+function isDisplayableJob(job) {
+  const company = normalizeJobText(job.company);
+  const title = normalizeJobText(job.title);
+  const description = normalizeJobText(job.description);
+  return company.replace(/\s+/g, "") !== "dataannotation"
+    && company !== "unknown"
+    && company !== "unknown company"
+    && title
+    && title !== "job"
+    && title !== "untitled job"
+    && !(/review the original/.test(description) && /listing/.test(description));
 }
