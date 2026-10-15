@@ -127,7 +127,7 @@ export default function DashboardPage() {
 
   return <div className="min-h-screen bg-[var(--bg)] transition-colors duration-200">
     <Header />
-    <div className="mx-auto max-w-[1400px] px-4 py-6"><div className="grid grid-cols-12 gap-6">
+    <div className="w-full px-4 py-6 sm:px-6 lg:px-8 xl:px-10"><div className="grid grid-cols-12 gap-6">
       <div className="col-span-12 lg:col-span-2"><div className="sticky top-6"><motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} className="rounded-2xl border border-[var(--primary)]/30 bg-white/80 p-4 shadow-xl backdrop-blur-xl dark:bg-[#1f252c]"><nav className="space-y-2">
         {navigationItems.map((item) => { const tab = item.name.toLowerCase().replace(" ", "-"); return <button key={item.name} type="button" onClick={() => setActiveTab(tab)} className={`flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-all duration-300 ${activeTab === tab ? "border border-[var(--primary)]/30 bg-[var(--primary)]/10 text-[var(--primary)]" : "text-[var(--fg)] hover:bg-[var(--primary)]/5"}`}><item.icon className="h-5 w-5" /><span className="hidden font-medium xl:block">{item.name}</span></button>; })}
       </nav></motion.div></div></div>

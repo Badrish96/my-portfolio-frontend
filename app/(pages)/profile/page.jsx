@@ -104,7 +104,7 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-[var(--bg)]">
       <Header />
-      <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <main className="w-full px-4 py-10 sm:px-6 lg:px-8 xl:px-10">
         <div className="mb-8">
           <p className="text-sm uppercase tracking-[0.2em] text-[var(--primary)]">Account</p>
           <h1 className="mt-2 text-4xl font-bold text-[var(--fg)]">Your profile</h1>

@@ -14,7 +14,7 @@ import { clearStoredAuth, readStoredAuth } from "../../lib/store/authStorage";
 const navigation = [
   { name: "Home", href: "/" },
   { name: "Dashboard", href: "/dashboard" },
-  { name: "Projects", href: "/#projects" },
+  { name: "Projects", href: "/projects" },
 ];
 
 function classNames(...classes) {
@@ -69,7 +69,7 @@ export default function Header() {
     <Disclosure as="nav" className="relative border-b border-white/10 py-2">
       {({ open }) => (
         <>
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10">
             <div className="flex h-14 items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-3">
                 <DisclosureButton
@@ -159,7 +159,7 @@ export default function Header() {
           </div>
 
           <DisclosurePanel className="border-t border-white/10 bg-[var(--bg)] px-4 pb-5 pt-4 shadow-lg xl:hidden">
-            <div className="mx-auto max-w-7xl space-y-4 sm:px-2">
+            <div className="w-full space-y-4 sm:px-2">
               <div className="max-w-full">
                 <Search />
               </div>
