@@ -9,7 +9,8 @@ import { useLoading } from "../../../components/ui/LoadingProvider";
 import { updateUser } from "../../../lib/store/authSlice";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-const emptyProfile = { name: "", username: "", email: "", firstName: "", middleName: "", lastName: "", mobilePhone: "", countryCode: "", gender: "", nationality: "", dateOfBirth: "", currentSalary: "", currentSalaryCurrency: "", expectedSalary: "", expectedSalaryCurrency: "", availableToJoin: "", currentLocation: "", experienceDetails: "", relevantExperienceYears: "", userType: "developer", bio: "", location: "", website: "", avatar: "", skills: [], preferredRoles: [], preferredLocations: [], experienceYears: "", expectedCompensation: "" };
+const resumeDefaults = { resumeSummary: "Senior Software Developer with 5+ years building scalable fintech, healthcare, e-commerce, and developer platforms using React, Next.js, TypeScript, Node.js, React Native, and AI-assisted workflows.", experienceDetails: "Senior Software Developer — Programming.com (Client: Appinventiv), Dec 2025–Present\nBuilt loan origination and healthcare workflows using React, Next.js, TypeScript, and Node.js. Implemented OCR/KYC, role-based access, multi-step forms, i18n, and frontend performance improvements.\n\nSenior Software Developer — OneDAO, Jun 2024–Aug 2025\nArchitected a full-stack fundraising platform for startups and investors across web and React Native. Implemented Auth0, JWT, Google OAuth, PostgreSQL schemas, Node.js REST microservices, Azure DevOps CI/CD, and mentoring.\n\nSenior Software Developer — Accenture (Client: Verizon), May 2020–May 2023\nDeveloped high-traffic e-commerce modules for product catalog, checkout, accounts, and order management using Angular, React Native, TypeScript, REST APIs, microservices, and CI/CD.\n\nProgram Ready Trainer II — Concentrix, Jun 2016–May 2020\nDelivered technical training and troubleshooting support for AT&T broadband services with 90%+ customer satisfaction.", projectDetails: "Sammaan Capital — Loan Origination Platform: React, Next.js, TypeScript, React Hook Form, Zod, Node.js, Azure DevOps. Built onboarding, OCR-based KYC, role-based dashboards, and loan processing workflows.\n\nPonteo — Healthcare Platform: React, Next.js, TypeScript, Redux Toolkit, Node.js, REST APIs, Tailwind CSS. Built healthcare workflows and reusable responsive UI modules.\n\nOneDAO — Fintech Fundraising Platform: React, React Native, Node.js, Express.js, PostgreSQL, MongoDB, Auth0, Redis. Built startup and investor workflows, authentication, schemas, REST microservices, and CI/CD.\n\nVerizon E-commerce Platform: Angular, React Native, TypeScript, Node.js, REST APIs, Azure DevOps, AWS, microservices. Built catalog, checkout, account, and order management modules.", githubUrl: "https://github.com/Badrish96" };
+const emptyProfile = { name: "", username: "", email: "", firstName: "", middleName: "", lastName: "", mobilePhone: "", countryCode: "", gender: "", nationality: "", dateOfBirth: "", currentSalary: "", currentSalaryCurrency: "INR", expectedSalary: "1600000", expectedSalaryCurrency: "INR", availableToJoin: "", currentLocation: "", relevantExperienceYears: "", educationDetails: "", certifications: "", achievements: "", languages: "English, Hindi", workAuthorization: "", noticePeriod: "", linkedinUrl: "", portfolioUrl: "", ...resumeDefaults, userType: "developer", bio: "", location: "", website: "", avatar: "", skills: ["React.js", "Next.js", "TypeScript", "Node.js", "React Native", "Angular", "REST APIs", "PostgreSQL", "MongoDB", "Azure DevOps"], preferredRoles: ["Frontend Developer", "Senior Software Developer", "Full Stack Developer"], preferredLocations: ["Gurugram", "Bangalore", "Noida", "Delhi NCR"], experienceYears: "9", expectedCompensation: "1600000" };
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function ProfilePage() {
     storage.setItem("authUser", JSON.stringify(user));
     dispatch(updateUser(user));
     window.dispatchEvent(new Event("auth-user-updated"));
-    setProfile((current) => ({ ...current, ...user }));
+    setProfile((current) => mergeProfileData(current, user));
   };
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function ProfilePage() {
         const response = await fetch(`${API_BASE}/api/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
         const data = await response.json();
         if (!response.ok) throw new Error(data.message || "Unable to load profile.");
-        setProfile((current) => ({ ...current, ...data.user }));
+        setProfile((current) => mergeProfileData(current, data.user));
       } catch (error) {
         setMessage({ type: "error", text: error.message });
       } finally {
@@ -157,9 +158,20 @@ export default function ProfilePage() {
               <Field label="Available to join (days)" name="availableToJoin" type="number" min="0" value={profile.availableToJoin ?? ""} onChange={handleChange} disabled={!isEditing} />
               <Field label="Current location" name="currentLocation" value={profile.currentLocation} onChange={handleChange} disabled={!isEditing} />
               <Field label="Relevant experience (years)" name="relevantExperienceYears" type="number" min="0" max="80" value={profile.relevantExperienceYears ?? ""} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Notice period / joining availability" name="noticePeriod" value={profile.noticePeriod} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Work authorization" name="workAuthorization" value={profile.workAuthorization} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Languages" name="languages" value={profile.languages} onChange={handleChange} disabled={!isEditing} />
+              <Field label="LinkedIn URL" name="linkedinUrl" value={profile.linkedinUrl} onChange={handleChange} disabled={!isEditing} />
+              <Field label="GitHub URL" name="githubUrl" value={profile.githubUrl} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Portfolio URL" name="portfolioUrl" value={profile.portfolioUrl} onChange={handleChange} disabled={!isEditing} />
             </div>
             <label className="mt-5 block text-sm font-medium text-[var(--fg)]">Bio<textarea name="bio" value={profile.bio} onChange={handleChange} disabled={!isEditing} maxLength={1000} rows={5} className="mt-2 w-full resize-y rounded-xl border border-[var(--primary)]/25 bg-[var(--bg)] px-4 py-3 text-[var(--fg)] disabled:opacity-60" placeholder="Tell people a little about yourself" /></label>
+            <ResumeTextArea label="Professional summary" name="resumeSummary" value={profile.resumeSummary} onChange={handleChange} disabled={!isEditing} />
+            <ResumeTextArea label="Education" name="educationDetails" value={profile.educationDetails} onChange={handleChange} disabled={!isEditing} placeholder="Degree, institution, graduation year" />
             <label className="mt-5 block text-sm font-medium text-[var(--fg)]">Experience details<textarea name="experienceDetails" value={profile.experienceDetails} onChange={handleChange} disabled={!isEditing} maxLength={3000} rows={5} className="mt-2 w-full resize-y rounded-xl border border-[var(--primary)]/25 bg-[var(--bg)] px-4 py-3 text-[var(--fg)] disabled:opacity-60" placeholder="Describe your relevant experience" /></label>
+            <ResumeTextArea label="Projects" name="projectDetails" value={profile.projectDetails} onChange={handleChange} disabled={!isEditing} />
+            <ResumeTextArea label="Certifications" name="certifications" value={profile.certifications} onChange={handleChange} disabled={!isEditing} />
+            <ResumeTextArea label="Achievements" name="achievements" value={profile.achievements} onChange={handleChange} disabled={!isEditing} />
             {isEditing && <button type="submit" className="mt-6 w-full rounded-xl bg-gradient-to-r from-[var(--primary)] to-blue-500 px-4 py-3 font-semibold text-white shadow-lg">Save changes</button>}
           </form>
         </div>
@@ -180,6 +192,18 @@ function numberOrUndefined(value) {
   return value === "" || value == null ? undefined : Number(value);
 }
 
+function mergeProfileData(current, user) {
+  const merged = { ...current, ...user };
+  for (const field of ["resumeSummary", "experienceDetails", "projectDetails", "githubUrl", "skills", "preferredRoles", "preferredLocations"]) {
+    if (user?.[field] == null || user[field] === "" || (Array.isArray(user[field]) && user[field].length === 0)) merged[field] = current[field] ?? resumeDefaults[field];
+  }
+  return merged;
+}
+
 function Field({ label, icon, ...props }) {
   return <label className="block text-sm font-medium text-[var(--fg)]">{label}<span className="relative mt-2 block">{icon && <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--fg)]/50">{icon}</span>}<input {...props} className={`w-full rounded-xl border border-[var(--primary)]/25 bg-[var(--bg)] px-4 py-3 text-[var(--fg)] disabled:opacity-60 ${icon ? "pl-10" : ""}`} /></span></label>;
+}
+
+function ResumeTextArea({ label, ...props }) {
+  return <label className="mt-5 block text-sm font-medium text-[var(--fg)]">{label}<textarea {...props} rows={5} className="mt-2 w-full resize-y rounded-xl border border-[var(--primary)]/25 bg-[var(--bg)] px-4 py-3 text-[var(--fg)] disabled:opacity-60" /></label>;
 }
