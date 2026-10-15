@@ -55,8 +55,11 @@ export default function DashboardPage() {
       ]);
       const suggestions = Array.isArray(suggestionsResponse.suggestions) ? suggestionsResponse.suggestions : [];
       const discoveredJobs = Array.isArray(jobsResponse.jobs) ? jobsResponse.jobs : [];
-      setJobs(suggestions.length > 0 ? suggestions : discoveredJobs);
-      setSummary({ ...EMPTY_SUMMARY, ...(summaryResponse.summary || {}) });
+      const allowedSuggestions = suggestions.filter((job) => isAllowedJobLocation(job.location));
+      const allowedDiscoveredJobs = discoveredJobs.filter((job) => isAllowedJobLocation(job.location));
+      const displayedJobs = allowedSuggestions.length > 0 ? allowedSuggestions : allowedDiscoveredJobs;
+      setJobs(displayedJobs);
+      setSummary({ ...EMPTY_SUMMARY, ...(summaryResponse.summary || {}), jobsDiscovered: displayedJobs.length });
       setApplications(Array.isArray(applicationsResponse.applications) ? applicationsResponse.applications : []);
     } catch (requestError) {
       setError(requestError.message); setJobs([]); setApplications([]); setSummary(EMPTY_SUMMARY);
@@ -159,4 +162,12 @@ function ResumePanel() {
 
 function AnalyticsPanel({ summary, applications }) {
   return <section className="rounded-3xl border border-[var(--primary)]/30 bg-white/80 p-5 shadow-xl backdrop-blur-xl dark:bg-[#1f252c]"><h2 className="text-xl font-semibold text-[var(--fg)]">Application analytics</h2><div className="mt-5 grid gap-4 sm:grid-cols-2"><StatCard label="Open jobs" value={summary.jobsDiscovered} /><StatCard label="Applications" value={summary.applications} /><StatCard label="Interviews" value={summary.interviews} /><StatCard label="Ready for review" value={summary.readyForReview} /></div><div className="mt-6 rounded-2xl border border-[var(--primary)]/20 bg-[var(--bg)] p-4"><p className="text-sm text-[var(--fg)]/70">Current pipeline</p><p className="mt-2 text-2xl font-bold text-[var(--fg)]">{applications.filter((application) => ["interview", "approved"].includes(application.status)).length}</p><p className="text-sm text-[var(--fg)]/70">advanced applications</p></div></section>;
+}
+
+function isAllowedJobLocation(location) {
+  const normalized = String(location || "").toLowerCase();
+  return /\b(gurugram|gurgaon)\b/.test(normalized)
+    || /\b(bangalore|bengaluru)\b/.test(normalized)
+    || /\b(?:greater\s+)?noida\b/.test(normalized)
+    || /\b(?:new\s+)?delhi(?:\s+ncr)?\b/.test(normalized);
 }
