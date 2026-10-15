@@ -62,13 +62,19 @@ export default function DashboardPage() {
           .map((application) => application.job?.id)
           .filter(Boolean),
       );
+      const submittedJobKeys = new Set(
+        loadedApplications
+          .filter((application) => application.status === "submitted" && application.job)
+          .map((application) => `${normalizeJobText(application.job.company)}::${normalizeJobText(application.job.title)}`),
+      );
       const allowedSuggestions = suggestions.filter((job) => isAllowedJobLocation(job.location) && isDisplayableJob(job));
       const allowedDiscoveredJobs = discoveredJobs.filter((job) => isAllowedJobLocation(job.location) && isDisplayableJob(job));
       // Keep every allowed job returned by the jobs endpoint, then overlay any
       // AI match data returned by suggestions. Previously, the presence of one
       // old suggestion hid newly imported jobs from the dashboard entirely.
       const displayedJobs = deduplicateJobs([...allowedDiscoveredJobs, ...allowedSuggestions]
-        .filter((job) => !submittedJobIds.has(job.id)));
+        .filter((job) => !submittedJobIds.has(job.id)
+          && !submittedJobKeys.has(`${normalizeJobText(job.company)}::${normalizeJobText(job.title)}`)));
       setJobs(displayedJobs);
       setSummary({ ...EMPTY_SUMMARY, ...(summaryResponse.summary || {}), jobsDiscovered: displayedJobs.length });
       setApplications(loadedApplications);
