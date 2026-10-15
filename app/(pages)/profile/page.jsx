@@ -9,7 +9,7 @@ import { useLoading } from "../../../components/ui/LoadingProvider";
 import { updateUser } from "../../../lib/store/authSlice";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-const emptyProfile = { name: "", username: "", email: "", userType: "developer", bio: "", location: "", website: "", avatar: "", skills: [], preferredRoles: [], preferredLocations: [], experienceYears: "", expectedCompensation: "" };
+const emptyProfile = { name: "", username: "", email: "", firstName: "", middleName: "", lastName: "", mobilePhone: "", countryCode: "", gender: "", nationality: "", dateOfBirth: "", currentSalary: "", currentSalaryCurrency: "", expectedSalary: "", expectedSalaryCurrency: "", availableToJoin: "", currentLocation: "", experienceDetails: "", relevantExperienceYears: "", userType: "developer", bio: "", location: "", website: "", avatar: "", skills: [], preferredRoles: [], preferredLocations: [], experienceYears: "", expectedCompensation: "" };
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -61,7 +61,7 @@ export default function ProfilePage() {
       const response = await fetch(`${API_BASE}/api/auth/profile`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({ name: profile.name, username: profile.username, userType: profile.userType, bio: profile.bio, location: profile.location, website: profile.website, skills: toList(profile.skills), preferredRoles: toList(profile.preferredRoles), preferredLocations: toList(profile.preferredLocations), experienceYears: profile.experienceYears === "" ? undefined : Number(profile.experienceYears), expectedCompensation: profile.expectedCompensation === "" ? undefined : Number(profile.expectedCompensation) }),
+        body: JSON.stringify({ ...profile, skills: toList(profile.skills), preferredRoles: toList(profile.preferredRoles), preferredLocations: toList(profile.preferredLocations), experienceYears: numberOrUndefined(profile.experienceYears), expectedCompensation: numberOrUndefined(profile.expectedCompensation), currentSalary: numberOrUndefined(profile.currentSalary), expectedSalary: numberOrUndefined(profile.expectedSalary), availableToJoin: numberOrUndefined(profile.availableToJoin), relevantExperienceYears: numberOrUndefined(profile.relevantExperienceYears) }),
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "Unable to update profile.");
@@ -132,8 +132,16 @@ export default function ProfilePage() {
             <div className="mb-6 flex items-center justify-between gap-4"><h2 className="text-xl font-semibold text-[var(--fg)]">Profile details</h2><button type="button" onClick={() => setIsEditing((value) => !value)} className="rounded-lg border border-[var(--primary)]/30 px-4 py-2 text-sm font-medium text-[var(--primary)]">{isEditing ? "Cancel" : "Edit profile"}</button></div>
             <div className="grid gap-5 sm:grid-cols-2">
               <Field label="Full name" name="name" value={profile.name} onChange={handleChange} disabled={!isEditing} />
+              <Field label="First name" name="firstName" value={profile.firstName} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Middle name" name="middleName" value={profile.middleName} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Last name" name="lastName" value={profile.lastName} onChange={handleChange} disabled={!isEditing} />
               <Field label="Username" name="username" value={profile.username} onChange={handleChange} disabled={!isEditing} />
               <Field label="Email" name="email" value={profile.email} disabled />
+              <Field label="Mobile phone" name="mobilePhone" value={profile.mobilePhone} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Country code" name="countryCode" value={profile.countryCode} onChange={handleChange} disabled={!isEditing} placeholder="+91" />
+              <Field label="Gender" name="gender" value={profile.gender} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Nationality" name="nationality" value={profile.nationality} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Date of birth" name="dateOfBirth" type="date" value={profile.dateOfBirth} onChange={handleChange} disabled={!isEditing} />
               <label className="block text-sm font-medium text-[var(--fg)]">Account type<select name="userType" value={profile.userType} onChange={handleChange} disabled={!isEditing} className="mt-2 w-full rounded-xl border border-[var(--primary)]/25 bg-[var(--bg)] px-4 py-3 text-[var(--fg)] disabled:opacity-60"><option value="developer">Developer</option><option value="recruiter">Recruiter</option><option value="student">Student</option></select></label>
               <Field label="Location" name="location" value={profile.location} onChange={handleChange} disabled={!isEditing} icon={<MapPinIcon className="h-4 w-4" />} />
               <Field label="Website" name="website" value={profile.website} onChange={handleChange} disabled={!isEditing} icon={<LinkIcon className="h-4 w-4" />} />
@@ -142,8 +150,16 @@ export default function ProfilePage() {
               <Field label="Preferred locations (comma separated)" name="preferredLocations" value={toText(profile.preferredLocations)} onChange={handleChange} disabled={!isEditing} />
               <Field label="Years of experience" name="experienceYears" type="number" min="0" max="80" value={profile.experienceYears ?? ""} onChange={handleChange} disabled={!isEditing} />
               <Field label="Expected compensation" name="expectedCompensation" type="number" min="0" value={profile.expectedCompensation ?? ""} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Current salary" name="currentSalary" type="number" min="0" value={profile.currentSalary ?? ""} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Current salary currency" name="currentSalaryCurrency" value={profile.currentSalaryCurrency} onChange={handleChange} disabled={!isEditing} placeholder="USD" />
+              <Field label="Expected salary" name="expectedSalary" type="number" min="0" value={profile.expectedSalary ?? ""} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Expected salary currency" name="expectedSalaryCurrency" value={profile.expectedSalaryCurrency} onChange={handleChange} disabled={!isEditing} placeholder="USD" />
+              <Field label="Available to join (days)" name="availableToJoin" type="number" min="0" value={profile.availableToJoin ?? ""} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Current location" name="currentLocation" value={profile.currentLocation} onChange={handleChange} disabled={!isEditing} />
+              <Field label="Relevant experience (years)" name="relevantExperienceYears" type="number" min="0" max="80" value={profile.relevantExperienceYears ?? ""} onChange={handleChange} disabled={!isEditing} />
             </div>
             <label className="mt-5 block text-sm font-medium text-[var(--fg)]">Bio<textarea name="bio" value={profile.bio} onChange={handleChange} disabled={!isEditing} maxLength={1000} rows={5} className="mt-2 w-full resize-y rounded-xl border border-[var(--primary)]/25 bg-[var(--bg)] px-4 py-3 text-[var(--fg)] disabled:opacity-60" placeholder="Tell people a little about yourself" /></label>
+            <label className="mt-5 block text-sm font-medium text-[var(--fg)]">Experience details<textarea name="experienceDetails" value={profile.experienceDetails} onChange={handleChange} disabled={!isEditing} maxLength={3000} rows={5} className="mt-2 w-full resize-y rounded-xl border border-[var(--primary)]/25 bg-[var(--bg)] px-4 py-3 text-[var(--fg)] disabled:opacity-60" placeholder="Describe your relevant experience" /></label>
             {isEditing && <button type="submit" className="mt-6 w-full rounded-xl bg-gradient-to-r from-[var(--primary)] to-blue-500 px-4 py-3 font-semibold text-white shadow-lg">Save changes</button>}
           </form>
         </div>
@@ -158,6 +174,10 @@ function toList(value) {
 
 function toText(value) {
   return Array.isArray(value) ? value.join(", ") : value || "";
+}
+
+function numberOrUndefined(value) {
+  return value === "" || value == null ? undefined : Number(value);
 }
 
 function Field({ label, icon, ...props }) {
