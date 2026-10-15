@@ -55,15 +55,24 @@ export default function DashboardPage() {
       ]);
       const suggestions = Array.isArray(suggestionsResponse.suggestions) ? suggestionsResponse.suggestions : [];
       const discoveredJobs = Array.isArray(jobsResponse.jobs) ? jobsResponse.jobs : [];
+      const loadedApplications = Array.isArray(applicationsResponse.applications) ? applicationsResponse.applications : [];
+      const submittedJobIds = new Set(
+        loadedApplications
+          .filter((application) => application.status === "submitted")
+          .map((application) => application.job?.id)
+          .filter(Boolean),
+      );
       const allowedSuggestions = suggestions.filter((job) => isAllowedJobLocation(job.location));
       const allowedDiscoveredJobs = discoveredJobs.filter((job) => isAllowedJobLocation(job.location));
       // Keep every allowed job returned by the jobs endpoint, then overlay any
       // AI match data returned by suggestions. Previously, the presence of one
       // old suggestion hid newly imported jobs from the dashboard entirely.
-      const displayedJobs = [...new Map([...allowedDiscoveredJobs, ...allowedSuggestions].map((job) => [job.id, job])).values()];
+      const displayedJobs = [...new Map([...allowedDiscoveredJobs, ...allowedSuggestions]
+        .filter((job) => !submittedJobIds.has(job.id))
+        .map((job) => [job.id, job])).values()];
       setJobs(displayedJobs);
       setSummary({ ...EMPTY_SUMMARY, ...(summaryResponse.summary || {}), jobsDiscovered: displayedJobs.length });
-      setApplications(Array.isArray(applicationsResponse.applications) ? applicationsResponse.applications : []);
+      setApplications(loadedApplications);
     } catch (requestError) {
       setError(requestError.message); setJobs([]); setApplications([]); setSummary(EMPTY_SUMMARY);
     } finally { setLoading(false); stopLoading(); }
