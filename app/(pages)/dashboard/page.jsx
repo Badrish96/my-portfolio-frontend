@@ -34,6 +34,7 @@ export default function DashboardPage() {
   const [jobForm, setJobForm] = useState(EMPTY_JOB_FORM);
   const [processingJobId, setProcessingJobId] = useState(null);
   const [discovering, setDiscovering] = useState(false);
+  const [discoveringCareers, setDiscoveringCareers] = useState(false);
   const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
   const request = useCallback(async (path, options = {}) => {
@@ -140,6 +141,16 @@ export default function DashboardPage() {
     finally { setDiscovering(false); stopLoading(); }
   }, [refreshDashboard, request, startLoading, stopLoading]);
 
+  const handleDiscoverCompanyCareers = useCallback(async () => {
+    setError(""); setNotice(""); setDiscoveringCareers(true); startLoading();
+    try {
+      const response = await request("/api/jobs/discover-careers", { method: "POST", body: JSON.stringify({}) });
+      setNotice(response.message || `${response.discovered || 0} company career jobs discovered.`);
+      await refreshDashboard();
+    } catch (requestError) { setError(requestError.message); }
+    finally { setDiscoveringCareers(false); stopLoading(); }
+  }, [refreshDashboard, request, startLoading, stopLoading]);
+
   if (!hydrated || !token) return null;
 
   return <div className="min-h-screen bg-[var(--bg)] transition-colors duration-200">
@@ -150,7 +161,7 @@ export default function DashboardPage() {
       </nav></motion.div></div></div>
 
       <div className="col-span-12 lg:col-span-7"><motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-6 rounded-3xl border border-[var(--primary)]/30 bg-white/80 p-6 shadow-xl backdrop-blur-xl dark:bg-[#1f252c]">
-        <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm uppercase tracking-[0.2em] text-[var(--primary)]">AI Job Hunt</p><h1 className="mt-2 text-3xl font-bold text-[var(--fg)]">{tabTitle(activeTab)}</h1></div><div className="flex flex-wrap gap-2"><button onClick={refreshDashboard} disabled={loading || discovering} className="rounded-xl border border-[var(--primary)]/30 px-4 py-2 text-sm font-medium text-[var(--fg)] transition hover:bg-[var(--primary)]/10 disabled:opacity-50"><ArrowPathIcon className={`mr-2 inline h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh</button>{(activeTab === "overview" || activeTab === "ai-matches") && <><button onClick={handleDiscoverJobs} disabled={discovering} className="rounded-xl bg-blue-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-blue-500/20 transition hover:opacity-90 disabled:opacity-50">{discovering ? "Discovering..." : "Discover jobs"}</button><button onClick={() => setShowJobForm((visible) => !visible)} className="rounded-xl bg-[var(--primary)] px-4 py-2 text-sm font-medium text-slate-950 shadow-lg shadow-[var(--primary)]/20 transition hover:opacity-90"><PlusIcon className="mr-2 inline h-4 w-4" />Add job</button></>}</div></div>
+        <div className="flex flex-wrap items-center justify-between gap-4"><div><p className="text-sm uppercase tracking-[0.2em] text-[var(--primary)]">AI Job Hunt</p><h1 className="mt-2 text-3xl font-bold text-[var(--fg)]">{tabTitle(activeTab)}</h1></div><div className="flex flex-wrap gap-2"><button onClick={refreshDashboard} disabled={loading || discovering || discoveringCareers} className="rounded-xl border border-[var(--primary)]/30 px-4 py-2 text-sm font-medium text-[var(--fg)] transition hover:bg-[var(--primary)]/10 disabled:opacity-50"><ArrowPathIcon className={`mr-2 inline h-4 w-4 ${loading ? "animate-spin" : ""}`} />Refresh</button>{(activeTab === "overview" || activeTab === "ai-matches") && <><button onClick={handleDiscoverJobs} disabled={discovering || discoveringCareers} className="rounded-xl bg-blue-500 px-4 py-2 text-sm font-medium text-white shadow-lg shadow-blue-500/20 transition hover:opacity-90 disabled:opacity-50">{discovering ? "Discovering..." : "Discover jobs"}</button><button onClick={handleDiscoverCompanyCareers} disabled={discovering || discoveringCareers} className="rounded-xl border border-[var(--primary)]/40 px-4 py-2 text-sm font-medium text-[var(--fg)] transition hover:bg-[var(--primary)]/10 disabled:opacity-50">{discoveringCareers ? "Checking careers..." : "Company careers"}</button><button onClick={() => setShowJobForm((visible) => !visible)} className="rounded-xl bg-[var(--primary)] px-4 py-2 text-sm font-medium text-slate-950 shadow-lg shadow-[var(--primary)]/20 transition hover:opacity-90"><PlusIcon className="mr-2 inline h-4 w-4" />Add job</button></>}</div></div>
         {showJobForm && (activeTab === "overview" || activeTab === "ai-matches") && <JobForm form={jobForm} onChange={setJobForm} onSubmit={handleCreateJob} />}
         <div className="mt-6 grid gap-4 md:grid-cols-3"><StatCard label="Jobs found" value={summary.jobsDiscovered} /><StatCard label="Shortlisted" value={summary.shortlisted} /><StatCard label="Applications" value={summary.applications} /></div>
       </motion.div>
