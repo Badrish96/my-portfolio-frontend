@@ -67,9 +67,8 @@ export default function DashboardPage() {
       // Keep every allowed job returned by the jobs endpoint, then overlay any
       // AI match data returned by suggestions. Previously, the presence of one
       // old suggestion hid newly imported jobs from the dashboard entirely.
-      const displayedJobs = [...new Map([...allowedDiscoveredJobs, ...allowedSuggestions]
-        .filter((job) => !submittedJobIds.has(job.id))
-        .map((job) => [job.id, job])).values()];
+      const displayedJobs = deduplicateJobs([...allowedDiscoveredJobs, ...allowedSuggestions]
+        .filter((job) => !submittedJobIds.has(job.id)));
       setJobs(displayedJobs);
       setSummary({ ...EMPTY_SUMMARY, ...(summaryResponse.summary || {}), jobsDiscovered: displayedJobs.length });
       setApplications(loadedApplications);
@@ -182,4 +181,21 @@ function isAllowedJobLocation(location) {
     || /\b(bangalore|bengaluru)\b/.test(normalized)
     || /\b(?:greater\s+)?noida\b/.test(normalized)
     || /\b(?:new\s+)?delhi(?:\s+ncr)?\b/.test(normalized);
+}
+
+function deduplicateJobs(jobList) {
+  const jobsByRoleAndCompany = new Map();
+  for (const job of jobList) {
+    const key = `${normalizeJobText(job.company)}::${normalizeJobText(job.title)}`;
+    if (!jobsByRoleAndCompany.has(key)) jobsByRoleAndCompany.set(key, job);
+  }
+  return [...jobsByRoleAndCompany.values()];
+}
+
+function normalizeJobText(value) {
+  return String(value || "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
 }
