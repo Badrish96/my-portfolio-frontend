@@ -57,7 +57,10 @@ export default function DashboardPage() {
       const discoveredJobs = Array.isArray(jobsResponse.jobs) ? jobsResponse.jobs : [];
       const allowedSuggestions = suggestions.filter((job) => isAllowedJobLocation(job.location));
       const allowedDiscoveredJobs = discoveredJobs.filter((job) => isAllowedJobLocation(job.location));
-      const displayedJobs = allowedSuggestions.length > 0 ? allowedSuggestions : allowedDiscoveredJobs;
+      // Keep every allowed job returned by the jobs endpoint, then overlay any
+      // AI match data returned by suggestions. Previously, the presence of one
+      // old suggestion hid newly imported jobs from the dashboard entirely.
+      const displayedJobs = [...new Map([...allowedDiscoveredJobs, ...allowedSuggestions].map((job) => [job.id, job])).values()];
       setJobs(displayedJobs);
       setSummary({ ...EMPTY_SUMMARY, ...(summaryResponse.summary || {}), jobsDiscovered: displayedJobs.length });
       setApplications(Array.isArray(applicationsResponse.applications) ? applicationsResponse.applications : []);
