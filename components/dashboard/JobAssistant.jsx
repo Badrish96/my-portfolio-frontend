@@ -17,7 +17,11 @@ export default function JobAssistant({ request, onPrepare, profile = {} }) {
   const [error, setError] = useState("");
   const endRef = useRef(null);
 
-  useEffect(() => endRef.current?.scrollIntoView({ behavior: "smooth" }), [messages]);
+  useEffect(() => {
+    // Keep the effect cleanup return value undefined. Some browsers or
+    // embedded page contexts do not expose scrollIntoView on every element.
+    endRef.current?.scrollIntoView?.({ behavior: "smooth" });
+  }, [messages]);
 
   async function sendMessage(value = draft) {
     const content = String(value || "").trim();
@@ -35,7 +39,11 @@ export default function JobAssistant({ request, onPrepare, profile = {} }) {
           history: nextMessages.slice(-9, -1).map(({ role, content: text }) => ({ role, content: text })),
         }),
       });
-      setMessages((current) => [...current, { role: "assistant", content: result.reply, jobs: result.jobs || [] }]);
+      setMessages((current) => [...current, {
+        role: "assistant",
+        content: typeof result?.reply === "string" ? result.reply : "I searched the portal jobs. Review the matches below.",
+        jobs: Array.isArray(result?.jobs) ? result.jobs : [],
+      }]);
     } catch (requestError) {
       setError(requestError.message || "I couldn’t reach the job assistant.");
       setMessages((current) => [...current, { role: "assistant", content: "I couldn’t search the portal just now. Please try again in a moment.", jobs: [] }]);
@@ -50,9 +58,9 @@ export default function JobAssistant({ request, onPrepare, profile = {} }) {
     try {
       const result = await onPrepare(job);
       const missingProfileDetails = [
-        !profile.email && "email",
-        !profile.mobilePhone && "phone number",
-        !(profile.currentLocation || profile.location) && "current location",
+        !profile?.email && "email",
+        !profile?.mobilePhone && "phone number",
+        !(profile?.currentLocation || profile?.location) && "current location",
       ].filter(Boolean);
       const profilePrompt = missingProfileDetails.length
         ? ` Your saved profile is missing ${missingProfileDetails.join(", ")}; add these manually if the employer form requires them.`
@@ -79,7 +87,7 @@ export default function JobAssistant({ request, onPrepare, profile = {} }) {
       {messages.map((message, index) => <article key={`${index}-${message.role}`} className={`max-w-3xl ${message.role === "user" ? "ml-auto" : "mr-auto"}`}>
         <div className={`whitespace-pre-wrap rounded-2xl px-4 py-3 text-sm leading-6 ${message.role === "user" ? "bg-[var(--primary)] text-slate-950" : "border border-[var(--primary)]/15 bg-[var(--bg)] text-[var(--fg)]"}`}>{message.content}</div>
         {message.applicationUrl && <a href={message.applicationUrl} target="_blank" rel="noreferrer" className="mt-3 inline-flex rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-semibold text-slate-950">Open employer application</a>}
-        {message.jobs?.length > 0 && <div className="mt-3 space-y-3">{message.jobs.map((job) => <div key={job.id} className="rounded-2xl border border-[var(--primary)]/20 bg-[var(--bg)] p-4"><div className="flex flex-wrap items-start justify-between gap-2"><div><h3 className="font-semibold text-[var(--fg)]">{job.title}</h3><p className="text-sm text-[var(--fg)]/65">{job.company} · {job.location || "Location not specified"}</p></div>{job.match && <span className="rounded-full bg-[var(--primary)]/10 px-3 py-1 text-xs font-semibold text-[var(--primary)]">{job.match.matchScore}% match</span>}</div>{job.match?.matchingSkills?.length > 0 && <p className="mt-2 text-xs text-[var(--fg)]/70">Skills matched: {job.match.matchingSkills.join(", ")}</p>}<div className="mt-3 flex flex-wrap gap-2"><button type="button" disabled={Boolean(preparingId)} onClick={() => prepareJob(job)} className="rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-medium text-slate-950 disabled:cursor-wait disabled:opacity-50">{preparingId === job.id ? "Preparing…" : "Prepare application"}</button>{job.applicationUrl && <a href={job.applicationUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-[var(--primary)]/30 px-3 py-2 text-sm text-[var(--fg)]">View job</a>}</div></div>)}</div>}
+        {Array.isArray(message.jobs) && message.jobs.length > 0 && <div className="mt-3 space-y-3">{message.jobs.map((job) => <div key={job.id} className="rounded-2xl border border-[var(--primary)]/20 bg-[var(--bg)] p-4"><div className="flex flex-wrap items-start justify-between gap-2"><div><h3 className="font-semibold text-[var(--fg)]">{job.title}</h3><p className="text-sm text-[var(--fg)]/65">{job.company} · {job.location || "Location not specified"}</p></div>{job.match && <span className="rounded-full bg-[var(--primary)]/10 px-3 py-1 text-xs font-semibold text-[var(--primary)]">{job.match.matchScore}% match</span>}</div>{Array.isArray(job.match?.matchingSkills) && job.match.matchingSkills.length > 0 && <p className="mt-2 text-xs text-[var(--fg)]/70">Skills matched: {job.match.matchingSkills.join(", ")}</p>}<div className="mt-3 flex flex-wrap gap-2"><button type="button" disabled={Boolean(preparingId)} onClick={() => prepareJob(job)} className="rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-medium text-slate-950 disabled:cursor-wait disabled:opacity-50">{preparingId === job.id ? "Preparing…" : "Prepare application"}</button>{job.applicationUrl && <a href={job.applicationUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-[var(--primary)]/30 px-3 py-2 text-sm text-[var(--fg)]">View job</a>}</div></div>)}</div>}
       </article>)}
       {sending && <p className="mr-auto rounded-2xl border border-[var(--primary)]/15 bg-[var(--bg)] px-4 py-3 text-sm text-[var(--fg)]/65">Checking the portal jobs…</p>}
       {error && <p role="alert" className="mx-auto max-w-3xl rounded-lg bg-red-500/10 px-3 py-2 text-sm text-red-600 dark:text-red-300">{error}</p>}
