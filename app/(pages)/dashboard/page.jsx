@@ -76,7 +76,20 @@ export default function DashboardPage() {
       // Keep every allowed job returned by the jobs endpoint, then overlay any
       // AI match data returned by suggestions. Previously, the presence of one
       // old suggestion hid newly imported jobs from the dashboard entirely.
-      const displayedJobs = deduplicateJobs([...allowedDiscoveredJobs, ...allowedSuggestions]
+      const mergedByPosting = new Map();
+      for (const job of [...allowedDiscoveredJobs, ...allowedSuggestions]) {
+        const key = getJobPostingKey(job);
+        const existing = mergedByPosting.get(key);
+        if (!existing) {
+          mergedByPosting.set(key, job);
+          continue;
+        }
+        const existingScore = Number(existing.match?.matchScore ?? -1);
+        const incomingScore = Number(job.match?.matchScore ?? -1);
+        if (incomingScore > existingScore) mergedByPosting.set(key, { ...existing, ...job, match: job.match });
+        else if (!existing.match && job.match) mergedByPosting.set(key, { ...existing, match: job.match });
+      }
+      const displayedJobs = deduplicateJobs([...mergedByPosting.values()]
         .filter((job) => !submittedJobIds.has(job.id)
           && !submittedJobKeys.has(`${normalizeJobText(job.company)}::${normalizeJobText(job.title)}`)));
       setJobs(displayedJobs);
@@ -175,7 +188,10 @@ export default function DashboardPage() {
     setError(""); setNotice(""); setDiscoveringCareers(true); startLoading();
     try {
       const response = await request("/api/jobs/discover-careers", { method: "POST", body: JSON.stringify({}) });
-      setNotice(response.message || `${response.discovered || 0} company career jobs discovered.`);
+      const sourceSummary = Number.isFinite(response.companies)
+        ? ` Scanned ${response.companies} career sources; ${response.activeSources || 0} returned jobs${response.unreadableSources ? `, ${response.unreadableSources} had no readable feed` : ""}.`
+        : "";
+      setNotice(`${response.message || `${response.discovered || 0} company career jobs discovered.`}${sourceSummary}`);
       await refreshDashboard();
     } catch (requestError) { setError(requestError.message); }
     finally { setDiscoveringCareers(false); stopLoading(); }
@@ -252,6 +268,19 @@ function normalizeJobText(value) {
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .replace(/\s+/g, " ");
+}
+
+function getJobPostingKey(job) {
+  try {
+    const url = new URL(job.applicationUrl || job.sourceUrl);
+    for (const key of [...url.searchParams.keys()]) {
+      if (/^(utm_.+|oga|source|ref|trackingid)$/i.test(key)) url.searchParams.delete(key);
+    }
+    url.searchParams.sort();
+    return url.toString().replace(/\/$/, "").toLowerCase();
+  } catch {
+    return `${normalizeJobText(job.company)}::${normalizeJobText(job.title)}`;
+  }
 }
 
 function isDisplayableJob(job) {
