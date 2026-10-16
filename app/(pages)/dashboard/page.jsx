@@ -4,8 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSelector } from "react-redux";
 import { motion } from "framer-motion";
-import { HomeIcon, SparklesIcon, BriefcaseIcon, CheckCircleIcon, ChartBarIcon, ArrowTrendingUpIcon, PaperClipIcon, PlusIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { HomeIcon, SparklesIcon, BriefcaseIcon, CheckCircleIcon, ChartBarIcon, ArrowTrendingUpIcon, PaperClipIcon, PlusIcon, ArrowPathIcon, ChatBubbleLeftRightIcon } from "@heroicons/react/24/outline";
 import Header from "../../../components/layout/Header";
+import JobAssistant from "../../../components/dashboard/JobAssistant";
 import { useLoading } from "../../../components/ui/LoadingProvider";
 import { selectAuth } from "../../../lib/store/authSlice";
 
@@ -13,6 +14,7 @@ const EMPTY_SUMMARY = { jobsDiscovered: 0, applications: 0, shortlisted: 0, inte
 const EMPTY_JOB_FORM = { title: "", company: "", location: "", description: "", requiredSkills: "", applicationUrl: "" };
 const navigationItems = [
   { name: "Overview", icon: HomeIcon, active: true },
+  { name: "Job Assistant", icon: ChatBubbleLeftRightIcon, active: false },
   { name: "AI Matches", icon: SparklesIcon, active: false },
   { name: "Applications", icon: BriefcaseIcon, active: false },
   { name: "Resume", icon: PaperClipIcon, active: false },
@@ -130,6 +132,17 @@ export default function DashboardPage() {
     finally { setProcessingJobId(null); stopLoading(); }
   }, [refreshDashboard, request, startLoading, stopLoading]);
 
+  const prepareAssistantApplication = useCallback(async (job) => {
+    setError(""); setNotice(""); startLoading();
+    try {
+      const response = await request(`/api/jobs/${job.id}/apply`, { method: "POST" });
+      await refreshDashboard();
+      return response;
+    } finally {
+      stopLoading();
+    }
+  }, [refreshDashboard, request, startLoading, stopLoading]);
+
   const handleCreateJob = useCallback(async (event) => {
     event.preventDefault(); setError(""); setNotice(""); startLoading();
     try {
@@ -174,7 +187,7 @@ export default function DashboardPage() {
         <div className="mt-6 grid gap-4 md:grid-cols-3"><StatCard label="Matching jobs" value={summary.jobsDiscovered} /><StatCard label="Shortlisted" value={summary.shortlisted} /><StatCard label="Applications" value={summary.applications} /></div>
       </motion.div>
       {(error || notice) && <div className={`mb-4 rounded-xl border p-3 text-sm ${error ? "border-red-400/30 bg-red-500/10 text-red-600 dark:text-red-300" : "border-emerald-400/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"}`}>{error || notice}</div>}
-      {activeTab === "applications" ? <ApplicationsPanel applications={applications} onUpdate={updateApplication} /> : activeTab === "resume" ? <ResumePanel /> : activeTab === "analytics" ? <AnalyticsPanel summary={summary} applications={applications} /> : <div className="rounded-3xl border border-[var(--primary)]/30 bg-white/80 p-5 shadow-xl backdrop-blur-xl dark:bg-[#1f252c]"><div className="mb-4 flex items-center justify-between"><h2 className="text-xl font-semibold text-[var(--fg)]">{activeTab === "ai-matches" ? "AI matches" : "Recommended jobs"}</h2><span className="text-sm text-[var(--primary)]">{loading ? "Refreshing..." : `${visibleJobs.length} matching jobs`}</span></div>{visibleJobs.length === 0 ? <EmptyJobsState hasError={Boolean(error)} onAddJob={() => setShowJobForm(true)} /> : <div className="space-y-4">{visibleJobs.map((job) => <JobCard key={job.id} job={job} applicationStatus={applications.find((application) => application.job?.id === job.id)?.status} processing={processingJobId === job.id} onAction={handleJobAction} />)}</div>}</div>}</div>
+      {activeTab === "job-assistant" ? <JobAssistant request={request} onPrepare={prepareAssistantApplication} profile={user} /> : activeTab === "applications" ? <ApplicationsPanel applications={applications} onUpdate={updateApplication} /> : activeTab === "resume" ? <ResumePanel /> : activeTab === "analytics" ? <AnalyticsPanel summary={summary} applications={applications} /> : <div className="rounded-3xl border border-[var(--primary)]/30 bg-white/80 p-5 shadow-xl backdrop-blur-xl dark:bg-[#1f252c]"><div className="mb-4 flex items-center justify-between"><h2 className="text-xl font-semibold text-[var(--fg)]">{activeTab === "ai-matches" ? "AI matches" : "Recommended jobs"}</h2><span className="text-sm text-[var(--primary)]">{loading ? "Refreshing..." : `${visibleJobs.length} matching jobs`}</span></div>{visibleJobs.length === 0 ? <EmptyJobsState hasError={Boolean(error)} onAddJob={() => setShowJobForm(true)} /> : <div className="space-y-4">{visibleJobs.map((job) => <JobCard key={job.id} job={job} applicationStatus={applications.find((application) => application.job?.id === job.id)?.status} processing={processingJobId === job.id} onAction={handleJobAction} />)}</div>}</div>}</div>
 
       <div className="col-span-12 lg:col-span-3"><motion.aside initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="rounded-3xl border border-[var(--primary)]/30 bg-white/80 p-5 shadow-xl backdrop-blur-xl dark:bg-[#1f252c]"><div className="flex items-center gap-2"><ArrowTrendingUpIcon className="h-5 w-5 text-[var(--primary)]" /><h3 className="text-lg font-semibold text-[var(--fg)]">AI Summary</h3></div><div className="mt-5 space-y-4"><InsightRow label="Strongest fit" value={topMatch?.match?.matchingSkills?.join(" + ") || "Run match analysis"} /><InsightRow label="Missing skills" value={topMatch?.match?.missingSkills?.join(", ") || "No gaps reported"} /><InsightRow label="Next action" value={topMatch?.match?.recommendation === "apply" ? "Prepare application" : topMatch ? "Review match" : "Add a job"} /></div><div className="mt-6 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4"><div className="flex items-center gap-2 text-emerald-500"><CheckCircleIcon className="h-5 w-5" /><span className="font-medium">Application progress</span></div><p className="mt-2 text-sm text-[var(--fg)]/80">{summary.readyForReview} application{summary.readyForReview === 1 ? " is" : "s are"} ready for your review.</p></div></motion.aside></div>
     </div></div>
@@ -186,7 +199,7 @@ function JobForm({ form, onChange, onSubmit }) { const update = (field) => (even
 function EmptyJobsState({ hasError, onAddJob }) { return <div className="rounded-2xl border border-dashed border-[var(--primary)]/30 p-8 text-center"><SparklesIcon className="mx-auto h-8 w-8 text-[var(--primary)]" /><p className="mt-3 font-medium text-[var(--fg)]">{hasError ? "Jobs could not be loaded" : "No jobs are available yet"}</p><p className="mt-1 text-sm text-[var(--fg)]/70">Use Discover jobs after adding your preferred roles and skills, or add a listing manually.</p><button onClick={onAddJob} className="mt-4 rounded-lg bg-[var(--primary)] px-4 py-2 text-sm font-medium text-slate-950">Add a job</button></div>; }
 function StatCard({ label, value }) { return <div className="rounded-2xl border border-[var(--primary)]/20 bg-[var(--bg)] p-4"><p className="text-sm text-[var(--fg)]/70">{label}</p><p className="mt-2 text-2xl font-bold text-[var(--fg)]">{value}</p></div>; }
 function InsightRow({ label, value }) { return <div className="rounded-xl border border-[var(--primary)]/15 bg-[var(--bg)] p-3"><p className="text-xs uppercase tracking-[0.18em] text-[var(--fg)]/60">{label}</p><p className="mt-2 text-sm font-medium text-[var(--fg)]">{value}</p></div>; }
-function tabTitle(tab) { return { overview: "Application Dashboard", "ai-matches": "AI Matches", applications: "Applications", resume: "Resume workspace", analytics: "Application Analytics" }[tab] || "Application Dashboard"; }
+function tabTitle(tab) { return { overview: "Application Dashboard", "job-assistant": "Job Hunt Assistant", "ai-matches": "AI Matches", applications: "Applications", resume: "Resume workspace", analytics: "Application Analytics" }[tab] || "Application Dashboard"; }
 
 function ApplicationsPanel({ applications, onUpdate }) {
   return <section className="rounded-3xl border border-[var(--primary)]/30 bg-white/80 p-5 shadow-xl backdrop-blur-xl dark:bg-[#1f252c]"><div className="mb-4 flex items-center justify-between"><h2 className="text-xl font-semibold text-[var(--fg)]">Your applications</h2><span className="text-sm text-[var(--primary)]">{applications.length} from API</span></div>{applications.length === 0 ? <p className="rounded-2xl border border-dashed border-[var(--primary)]/30 p-8 text-center text-sm text-[var(--fg)]/70">Prepare an application from an AI match to see it here.</p> : <div className="space-y-3">{applications.map((application) => <div key={application.id} className="rounded-2xl border border-[var(--primary)]/20 bg-[var(--bg)] p-4"><div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-semibold text-[var(--fg)]">{application.job?.title || "Job unavailable"}</h3><p className="text-sm text-[var(--fg)]/70">{application.job?.company || "Unknown company"} · {application.job?.location || "Location not provided"}</p></div><span className="rounded-full border border-[var(--primary)]/30 px-3 py-1 text-xs uppercase tracking-[0.15em] text-[var(--primary)]">{application.status.replaceAll("_", " ")}</span></div><div className="mt-4 flex flex-wrap gap-2"><button type="button" onClick={() => onUpdate(application.id, { status: "shortlisted" })} className="rounded-lg border border-[var(--primary)]/30 px-3 py-2 text-sm text-[var(--fg)]">Shortlist</button><button type="button" onClick={() => onUpdate(application.id, { status: "interview" })} className="rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-medium text-slate-950">Mark interview</button>{application.job?.applicationUrl && <a href={application.job.applicationUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-[var(--primary)]/30 px-3 py-2 text-sm text-[var(--fg)]">Open application</a>}</div></div>)}</div>}</section>;
