@@ -238,7 +238,7 @@ function AnalyticsPanel({ summary, applications }) {
 // renderer above is replaced after module initialization for compatibility.
 function JobCardWithNotInterested({ job, applicationStatus, processing, onAction }) {
   const match = job.match;
-  const needsReview = job.source === "company-career" && (!match || Number(match.matchScore) < 60 || match.recommendation === "skip");
+  const needsReview = isManualReviewJob(job);
   return <div className="rounded-2xl border border-[var(--primary)]/20 bg-[var(--bg)] p-4">
     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
       <div><h3 className="text-lg font-semibold text-[var(--fg)]">{job.title}</h3><p className="text-sm text-[var(--fg)]/70">{job.company} · {job.location || "Location not provided"}</p></div>
@@ -323,7 +323,15 @@ function isStrongDashboardMatch(job) {
 function isDashboardVisibleJob(job) {
   if (isStrongDashboardMatch(job)) return true;
   // Career discovery explicitly keeps listings whose AI call failed or whose
-  // heuristic score is low so the user can review them manually. Do not hide
-  // those listings after the backend has told the user they are available.
-  return job.source === "company-career" && Boolean(job.match);
+  // heuristic score is low so the user can review them manually. Board scans
+  // use the same fallback when an AI provider fails, so those imports must be
+  // visible too instead of disappearing from the dashboard.
+  return isManualReviewJob(job);
+}
+
+function isManualReviewJob(job) {
+  return Boolean(job.match) && (
+    job.source === "company-career"
+    || job.match.provider === "heuristic-fallback"
+  );
 }
