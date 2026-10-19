@@ -298,5 +298,7 @@ function isDisplayableJob(job) {
 
 function isStrongDashboardMatch(job) {
   const score = Number(job.match?.matchScore);
-  return Number.isFinite(score) && score >= 60 && job.match?.recommendation !== "skip";
+  // Keep the same review threshold as the suggestions API. The old 60 point
+  // client-only cutoff hid valid "review" matches that the backend returned.
+  return Number.isFinite(score) && score >= 30 && job.match?.recommendation !== "skip";
 }
