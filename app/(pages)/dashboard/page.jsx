@@ -243,10 +243,10 @@ function isAllowedJobLocation(location, preferredLocations = []) {
   const locations = preferredLocations.length ? preferredLocations : ["Gurugram", "Bangalore", "Noida", "Delhi NCR"];
   return locations.some((locationName) => {
     const value = String(locationName || "").toLowerCase().trim();
-    const aliases = value === "gurugram" ? ["gurugram", "gurgaon"]
-      : value === "bangalore" ? ["bangalore", "bengaluru", "banglore"]
-        : value === "noida" ? ["noida", "greater noida"]
-          : value === "delhi ncr" ? ["delhi", "new delhi", "delhi ncr", "ncr"]
+    const aliases = ["gurugram", "gurgaon"].includes(value) ? ["gurugram", "gurgaon"]
+      : ["bangalore", "bengaluru", "banglore"].includes(value) ? ["bangalore", "bengaluru", "banglore"]
+        : ["noida", "greater noida"].includes(value) ? ["noida", "greater noida"]
+          : ["delhi", "new delhi", "delhi ncr", "ncr"].includes(value) ? ["delhi", "new delhi", "delhi ncr", "ncr"]
             : [value];
     return aliases.some((alias) => normalized.includes(alias));
   });
