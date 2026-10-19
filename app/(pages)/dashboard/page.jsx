@@ -130,6 +130,12 @@ export default function DashboardPage() {
         await refreshDashboard();
         return;
       }
+      if (action === "notInterested") {
+        await request(`/api/jobs/${job.id}`, { method: "DELETE" });
+        setJobs((currentJobs) => currentJobs.filter((currentJob) => currentJob.id !== job.id));
+        setNotice(`Removed ${job.title} at ${job.company} from your jobs.`);
+        return;
+      }
       const response = await request(action === "score" ? `/api/jobs/${job.id}/score` : `/api/jobs/${job.id}/apply`, { method: "POST" });
       if (action === "score" && response.match) {
         setJobs((currentJobs) => currentJobs.map((currentJob) => currentJob.id === job.id
@@ -227,6 +233,27 @@ function ResumePanel() {
 function AnalyticsPanel({ summary, applications }) {
   return <section className="rounded-3xl border border-[var(--primary)]/30 bg-white/80 p-5 shadow-xl backdrop-blur-xl dark:bg-[#1f252c]"><h2 className="text-xl font-semibold text-[var(--fg)]">Application analytics</h2><div className="mt-5 grid gap-4 sm:grid-cols-2"><StatCard label="Open jobs" value={summary.jobsDiscovered} /><StatCard label="Applications" value={summary.applications} /><StatCard label="Interviews" value={summary.interviews} /><StatCard label="Ready for review" value={summary.readyForReview} /></div><div className="mt-6 rounded-2xl border border-[var(--primary)]/20 bg-[var(--bg)] p-4"><p className="text-sm text-[var(--fg)]/70">Current pipeline</p><p className="mt-2 text-2xl font-bold text-[var(--fg)]">{applications.filter((application) => ["interview", "approved"].includes(application.status)).length}</p><p className="text-sm text-[var(--fg)]/70">advanced applications</p></div></section>;
 }
+
+// Keep the not-interested control in the same card action group. The legacy
+// renderer above is replaced after module initialization for compatibility.
+function JobCardWithNotInterested({ job, applicationStatus, processing, onAction }) {
+  const match = job.match;
+  return <div className="rounded-2xl border border-[var(--primary)]/20 bg-[var(--bg)] p-4">
+    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+      <div><h3 className="text-lg font-semibold text-[var(--fg)]">{job.title}</h3><p className="text-sm text-[var(--fg)]/70">{job.company} · {job.location || "Location not provided"}</p></div>
+      <div className="flex flex-wrap items-center gap-2">{match && <span className="rounded-full bg-[var(--primary)]/10 px-3 py-1 text-sm font-medium text-[var(--primary)]">{match.matchScore}% match</span>}{applicationStatus && <span className="rounded-full border border-emerald-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-emerald-600">{applicationStatus.replaceAll("_", " ")}</span>}</div>
+    </div>
+    <p className="mt-3 line-clamp-2 text-sm text-[var(--fg)]/70">{job.description}</p>
+    <div className="mt-4 flex flex-wrap gap-2">
+      {!match && <button disabled={processing} onClick={() => onAction(job, "score")} className="rounded-lg bg-[var(--primary)] px-3 py-2 text-sm font-medium text-slate-950 disabled:opacity-50">Analyze match</button>}
+      {applicationStatus !== "submitted" && <button type="button" disabled={processing} onClick={() => onAction(job, "submitted")} className="rounded-lg border border-emerald-500/40 px-3 py-2 text-sm font-medium text-emerald-700 disabled:opacity-50 dark:text-emerald-300">{processing ? "Updating…" : "Mark submitted"}</button>}
+      <button type="button" disabled={processing} onClick={() => onAction(job, "notInterested")} className="rounded-lg border border-red-400/40 px-3 py-2 text-sm font-medium text-red-600 disabled:opacity-50 dark:text-red-300">{processing ? "Removing…" : "Not interested"}</button>
+      {job.applicationUrl && <a href={job.applicationUrl} target="_blank" rel="noreferrer" className="rounded-lg border border-[var(--primary)]/30 px-3 py-2 text-sm text-[var(--fg)]">View job</a>}
+    </div>
+  </div>;
+}
+
+JobCard = JobCardWithNotInterested;
 
 function isAllowedJobLocation(location, preferredLocations = []) {
   const normalized = String(location || "").toLowerCase();
