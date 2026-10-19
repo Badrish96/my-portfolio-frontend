@@ -106,15 +106,6 @@ export default function DashboardPage() {
     refreshDashboard();
   }, [hydrated, refreshDashboard, router, token]);
 
-  useEffect(() => {
-    if (!token) return undefined;
-    const refreshWhenVisible = () => {
-      if (document.visibilityState === "visible") refreshDashboard();
-    };
-    document.addEventListener("visibilitychange", refreshWhenVisible);
-    return () => document.removeEventListener("visibilitychange", refreshWhenVisible);
-  }, [refreshDashboard, token]);
-
   const visibleJobs = useMemo(() => jobs
     .filter(isStrongDashboardMatch)
     .sort((left, right) => right.match.matchScore - left.match.matchScore), [jobs]);
@@ -134,8 +125,7 @@ export default function DashboardPage() {
     setProcessingJobId(job.id); setError(""); setNotice(""); startLoading();
     try {
       if (action === "submitted") {
-        const prepared = await request(`/api/jobs/${job.id}/apply`, { method: "POST" });
-        await request(`/api/applications/${prepared.application.id}`, { method: "PATCH", body: JSON.stringify({ status: "submitted" }) });
+        await request(`/api/jobs/${job.id}/mark-submitted`, { method: "POST" });
         setNotice(`Marked ${job.title} at ${job.company} as submitted.`);
         await refreshDashboard();
         return;
@@ -293,6 +283,7 @@ function isDisplayableJob(job) {
     && title
     && title !== "job"
     && title !== "untitled job"
+    && !/(?:\/expired(?:[/?#]|$)|[?&]expired(?:=true|1)?(?:&|$))/i.test(`${job.applicationUrl || ""} ${job.sourceUrl || ""}`)
     && !(/review the original/.test(description) && /listing/.test(description));
 }
 
