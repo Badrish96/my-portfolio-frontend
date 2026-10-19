@@ -107,8 +107,8 @@ export default function DashboardPage() {
   }, [hydrated, refreshDashboard, router, token]);
 
   const visibleJobs = useMemo(() => jobs
-    .filter(isStrongDashboardMatch)
-    .sort((left, right) => right.match.matchScore - left.match.matchScore), [jobs]);
+    .filter(isDashboardVisibleJob)
+    .sort((left, right) => (Number(right.match?.matchScore) || 0) - (Number(left.match?.matchScore) || 0)), [jobs]);
   const topMatch = visibleJobs[0] || null;
 
   const updateApplication = useCallback(async (applicationId, updates) => {
@@ -238,10 +238,11 @@ function AnalyticsPanel({ summary, applications }) {
 // renderer above is replaced after module initialization for compatibility.
 function JobCardWithNotInterested({ job, applicationStatus, processing, onAction }) {
   const match = job.match;
+  const needsReview = job.source === "company-career" && (!match || Number(match.matchScore) < 60 || match.recommendation === "skip");
   return <div className="rounded-2xl border border-[var(--primary)]/20 bg-[var(--bg)] p-4">
     <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
       <div><h3 className="text-lg font-semibold text-[var(--fg)]">{job.title}</h3><p className="text-sm text-[var(--fg)]/70">{job.company} · {job.location || "Location not provided"}</p></div>
-      <div className="flex flex-wrap items-center gap-2">{match && <span className="rounded-full bg-[var(--primary)]/10 px-3 py-1 text-sm font-medium text-[var(--primary)]">{match.matchScore}% match</span>}{applicationStatus && <span className="rounded-full border border-emerald-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-emerald-600">{applicationStatus.replaceAll("_", " ")}</span>}</div>
+      <div className="flex flex-wrap items-center gap-2">{match && <span className="rounded-full bg-[var(--primary)]/10 px-3 py-1 text-sm font-medium text-[var(--primary)]">{match.matchScore}% match</span>}{needsReview && <span className="rounded-full border border-amber-400/40 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">Needs review</span>}{applicationStatus && <span className="rounded-full border border-emerald-400/40 px-3 py-1 text-xs uppercase tracking-[0.2em] text-emerald-600">{applicationStatus.replaceAll("_", " ")}</span>}</div>
     </div>
     <p className="mt-3 line-clamp-2 text-sm text-[var(--fg)]/70">{job.description}</p>
     <div className="mt-4 flex flex-wrap gap-2">
@@ -317,4 +318,12 @@ function isDisplayableJob(job) {
 function isStrongDashboardMatch(job) {
   const score = Number(job.match?.matchScore);
   return Number.isFinite(score) && score >= 60 && job.match?.recommendation !== "skip";
+}
+
+function isDashboardVisibleJob(job) {
+  if (isStrongDashboardMatch(job)) return true;
+  // Career discovery explicitly keeps listings whose AI call failed or whose
+  // heuristic score is low so the user can review them manually. Do not hide
+  // those listings after the backend has told the user they are available.
+  return job.source === "company-career" && Boolean(job.match);
 }
